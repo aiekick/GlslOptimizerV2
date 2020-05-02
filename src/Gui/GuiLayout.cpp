@@ -42,6 +42,10 @@ void GuiLayout::Init()
 	{
 		m_FirstLayout = true; // need default layout
 	}
+
+	OptimizerPane::Instance()->Init();
+	SourcePane::Instance()->Init();
+	TargetPane::Instance()->Init();
 }
 
 void GuiLayout::InitAfterFirstDisplay(ImVec2 vSize)

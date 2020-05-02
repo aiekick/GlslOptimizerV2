@@ -17,8 +17,6 @@
  * limitations under the License.
  */
 
-#ifdef _DEBUG
-
 #include "TargetPane.h"
 
 #include "MainFrame.h"
@@ -38,6 +36,11 @@ static int TargetPane_WidgetId = 0;
 
 TargetPane::TargetPane() = default;
 TargetPane::~TargetPane() = default;
+
+void TargetPane::Init()
+{
+	m_CodeEditor.SetLanguageDefinition(TextEditor::LanguageDefinition::GLSL());
+}
 
 ///////////////////////////////////////////////////////////////////////////////////
 //// IMGUI PANE ///////////////////////////////////////////////////////////////////
@@ -60,7 +63,7 @@ int TargetPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 		{
 			if (vProjectFile &&  vProjectFile->IsLoaded())
 			{
-				
+				m_CodeEditor.Render("Target", ImVec2(-1, -1), false);
 			}
 		}
 
@@ -70,4 +73,14 @@ int TargetPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 	return TargetPane_WidgetId;
 }
 
-#endif
+std::string TargetPane::GetCode()
+{
+	return m_CodeEditor.GetText();
+}
+
+void TargetPane::SetCode(std::string vCode)
+{
+	m_CodeEditor.SetText(vCode);
+}
+
+

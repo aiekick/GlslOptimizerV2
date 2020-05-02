@@ -15,20 +15,45 @@
  */
 #pragma once
 
-#ifdef _DEBUG
-
 #include <imgui/imgui.h>
 
 #include <stdint.h>
 #include <string>
 #include <map>
 
+#include "ImGuiColorTextEdit/TextEditor.h"
+#include "ctools/GLVersionChecker.h"
+#include "src/code/GlslConvert.h"
+
 class ProjectFile;
 class OptimizerPane
 {
+private:
+	TextEditor m_CodeEditor;
+	enum OptimizerPaneFlags
+	{
+		OPT_PANE_NONE = 0,
+		OPT_PANE_OPTIMIZATION = (1 << 0),
+		OPT_PANE_COMPILER = (1 << 1)
+	} m_OptimizerPaneFlags = OPT_PANE_NONE;
+
+private:
+	OpenGlVersionStruct m_Current_OpenGlVersionStruct;
+	GlslConvert::ApiTarget m_ApiTarget = GlslConvert::ApiTarget::API_OPENGL_CORE;
+	GlslConvert::LanguageTarget m_LanguageTarget = GlslConvert::LanguageTarget::LANGUAGE_TARGET_GLSL;
+	GlslConvert::OptimizationStruct m_OptimizationStruct;
+
 public:
+	void Init();
+	bool DrawToolBar(GLFWwindow *vWin, float vWidth, bool *vAnyWindowHovered);
 	int DrawPane(ProjectFile *vProjectFile, int vWidgetId);
 	
+private:
+	void Generate();
+	void DrawOptimizationFlags(ImVec2 vSize);
+	void DrawCompilerFlags(ImVec2 vSize);
+	void DrawInstructionToLowerFlags(ImVec2 vSize);
+
 public: // singleton
 	static OptimizerPane *Instance()
 	{
@@ -42,5 +67,3 @@ protected:
 	OptimizerPane& operator =(const OptimizerPane&) { return *this; }; // Prevent assignment
 	~OptimizerPane(); // Prevent unwanted destruction};
 };
-
-#endif

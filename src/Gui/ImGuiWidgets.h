@@ -144,6 +144,55 @@ namespace ImGui
 		}
 		return res;
 	}
+	// cree des probleme de compilation si defini dans le cpp...
+	// There[the enum] wouldn't be compiled at all" - Enums don't get compiled per se.They take 
+	// up no space in the class.This is in contrast to, say, a static int which requires a definition 
+	// and causes an allocation.– jww Aug 5 '17 at 10:31
+	// https://stackoverflow.com/questions/9116267/using-an-enumeration-as-a-template-parameter
+	template<typename T>
+	IMGUI_API bool ImGui_CollapsingHeader_BitWize_OneAtATime(const char *vName, float vWidth, T *vContainer, T vOpenFlag, bool vCanSelectNothing)
+	{
+		if (!vContainer) return false;
+
+		bool pressed = false, isOpened = false;
+		bool is_open = ImGui_CollapsingHeader(vName, vWidth, *vContainer & vOpenFlag, &pressed);
+		if (pressed)
+		{
+			if (is_open)
+			{
+				// set
+				*vContainer = vOpenFlag;
+			}
+			else if (vCanSelectNothing)
+			{
+				// remove all
+				*vContainer = (T)(0);
+			}
+		}
+
+		return is_open;
+	}
+	template<typename T>
+	IMGUI_API bool CheckBoxBitWize(const char *vLabel, const char *vHelp, T *vContainer, T vFlag, bool vDef)
+	{
+		bool check = *vContainer & vFlag;
+		bool res = ImGui_CheckBox(vLabel, &check, vDef, vHelp);
+		if (res)
+		{
+			if (check)
+			{
+				// add
+				*vContainer = (T)(*vContainer | vFlag);
+			}
+			else
+			{
+				// remove
+				*vContainer = (T)(*vContainer & ~vFlag);
+			}
+		}
+		return res;
+	}
+
 	IMGUI_API bool ClickableTextUrl(const char* label,const char* url,bool vOnlined = true);
 	/*IMGUI_API bool ClickableTextUrl(const char* label,
 		const char* url, 
@@ -168,7 +217,8 @@ namespace ImGui
 		ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = nullptr, void* user_data = nullptr);
 	IMGUI_API void HelpMarker(const char* desc);
 	IMGUI_API void ShowCustomStyleEditor(bool *vOpen, ImGuiStyle* ref = nullptr);
-
-	////////////////////////////////////////////////////////////////////////////
+	IMGUI_API bool CheckBoxDefault(const char *vName, bool *vVar, bool vDefault, const char *vHelp);
+	IMGUI_API bool SliderIntDefault(float vWidth, const char *vName, int *vVar, int vInf, int vSup, int vDefault);
+	IMGUI_API void Header(const char *vName, float width = -1);
 }
 

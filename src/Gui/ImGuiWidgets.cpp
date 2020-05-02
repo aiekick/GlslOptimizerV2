@@ -931,3 +931,79 @@ void ImGui::ShowCustomStyleEditor(bool *vOpen, ImGuiStyle* ref)
 	}
 	ImGui::End();
 }
+
+bool ImGui::CheckBoxDefault(const char *vName, bool *vVar, bool vDefault, const char *vHelp)
+{
+	bool change = false;
+
+	float padding = ImGui::GetStyle().FramePadding.x;
+
+	change = ImGui::Button("R");
+	if (change)
+		*vVar = vDefault;
+
+	ImGui::SameLine();
+
+	change |= ImGui::Checkbox(vName, vVar);
+
+	if (vHelp)
+		if (ImGui::IsItemHovered())
+			ImGui::SetTooltip(vHelp);
+
+	return change;
+}
+
+bool ImGui::SliderIntDefault(float vWidth, const char *vName, int *vVar, int vInf, int vSup, int vDefault)
+{
+	bool change = false;
+
+	float padding = ImGui::GetStyle().FramePadding.x;
+
+	if (!ImGui::GetCurrentWindow()->ScrollbarY)
+	{
+		vWidth -= ImGui::GetStyle().ScrollbarSize;
+	}
+
+	change = ImGui::Button("R");
+	float w = vWidth - ImGui::GetItemRectSize().x - padding * 2.0f;
+	if (change)
+		*vVar = vDefault;
+
+	ImGui::SameLine();
+
+	change |= ImGui::SliderInt(vName, vVar, vInf, vSup, "%.0f");
+
+	ImGui::PopID();
+	ImGui::PopItemWidth();
+
+	return change;
+}
+
+void ImGui::Header(const char *vName, float width)
+{
+	ImGuiWindow* window = ImGui::GetCurrentWindow();
+	if (window->SkipItems)
+		return;
+
+	ImGuiContext& g = *GImGui;
+	const ImGuiStyle& style = g.Style;
+	const ImGuiID id = window->GetID(vName);
+	const ImVec2 label_size = ImGui::CalcTextSize(vName, NULL, true);
+
+	ImVec2 pos = window->DC.CursorPos;
+	ImVec2 size = ImGui::CalcItemSize(ImVec2(width, label_size.y + style.FramePadding.y * 2.0f), label_size.x + style.FramePadding.x * 2.0f, label_size.y + style.FramePadding.y * 2.0f);
+
+	const ImRect bb(pos, pos + size);
+	ImGui::ItemSize(bb, style.FramePadding.y);
+	if (!ImGui::ItemAdd(bb, id))
+		return;
+
+	bool hovered, held;
+	/*bool pressed = */ImGui::ButtonBehavior(bb, id, &hovered, &held, 0);
+	ImGui::SetItemAllowOverlap();
+
+	// Render
+	const ImU32 col = ImGui::GetColorU32(hovered ? ImGuiCol_HeaderHovered : ImGuiCol_Header);
+	ImGui::RenderFrame(bb.Min, bb.Max, col, true, style.FrameRounding);
+	ImGui::RenderTextClipped(bb.Min + style.FramePadding, bb.Max - style.FramePadding, vName, NULL, &label_size, style.ButtonTextAlign, &bb);
+}

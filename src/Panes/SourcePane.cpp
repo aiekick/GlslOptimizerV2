@@ -17,8 +17,6 @@
  * limitations under the License.
  */
 
-#ifdef _DEBUG
-
 #include "SourcePane.h"
 
 #include "MainFrame.h"
@@ -38,6 +36,11 @@ static int SourcePane_WidgetId = 0;
 
 SourcePane::SourcePane() = default;
 SourcePane::~SourcePane() = default;
+
+void SourcePane::Init()
+{
+	m_CodeEditor.SetLanguageDefinition(TextEditor::LanguageDefinition::GLSL());
+}
 
 ///////////////////////////////////////////////////////////////////////////////////
 //// IMGUI PANE ///////////////////////////////////////////////////////////////////
@@ -60,7 +63,7 @@ int SourcePane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 		{
 			if (vProjectFile &&  vProjectFile->IsLoaded())
 			{
-
+				m_CodeEditor.Render("Source", ImVec2(-1, -1), false);
 			}
 		}
 
@@ -70,4 +73,13 @@ int SourcePane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 	return SourcePane_WidgetId;
 }
 
-#endif
+std::string SourcePane::GetCode()
+{
+	return m_CodeEditor.GetText();
+}
+
+void SourcePane::SetCode(std::string vCode)
+{
+	m_CodeEditor.SetText(vCode);
+}
+

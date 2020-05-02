@@ -1,4 +1,4 @@
-// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+﻿// This is an open source non-commercial project. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include "imgui.h"
@@ -7,6 +7,8 @@
 #include <stdio.h>
 
 #include <FileHelper.h>
+
+#include "Helper/GLVersionChecker.h"
 #include "src/MainFrame.h"
 #include "Res/CustomFont.cpp"
 
@@ -31,6 +33,44 @@ static void glfw_window_close_callback(GLFWwindow* window)
 	MainFrame::Instance()->IWantToCloseTheApp();
 }
 
+bool IsGlversionSupported(int vMajor, int vMinor)
+{
+	bool res = false;
+
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, vMajor);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, vMinor);
+	glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
+	auto hnd = glfwCreateWindow(1, 1, "", NULL, NULL);
+	if (hnd)
+	{
+		res = true;
+		glfwDestroyWindow(hnd);
+	}
+
+	return res;
+}
+
+void FoundBestOpenGLVersionAvailable(int *vMajor, int *vMinor)
+{
+	// 4.5
+	if (IsGlversionSupported(4, 5)) { *vMajor = 4; *vMinor = 5; return; }
+	// 4.4
+	if (IsGlversionSupported(4, 4)) { *vMajor = 4; *vMinor = 4; return; }
+	// 4.3 => compute
+	if (IsGlversionSupported(4, 3)) { *vMajor = 4; *vMinor = 3; return; }
+	// 4.2
+	if (IsGlversionSupported(4, 2)) { *vMajor = 4; *vMinor = 2; return; }
+	// 4.1
+	if (IsGlversionSupported(4, 1)) { *vMajor = 4; *vMinor = 1; return; }
+	// 4.0 => tesselation
+	if (IsGlversionSupported(4, 0)) { *vMajor = 4; *vMinor = 0; return; }
+	// 3.3 => attrcib lcoation in core
+	if (IsGlversionSupported(3, 3)) { *vMajor = 3; *vMinor = 3; return; }
+	// 3.2 => attrib location in extention
+	if (IsGlversionSupported(3, 2)) { *vMajor = 3; *vMinor = 2; return; }
+	// on charge que les cores. ya pas de core avant 3.2
+}
+
 int main(int, char**argv)
 {
 	FileHelper::Instance()->SetAppPath(std::string(argv[0]));
@@ -44,35 +84,38 @@ int main(int, char**argv)
 
 	// Decide GL+GLSL versions
 #if APPLE
-    // GL 3.2 + GLSL 150
-    const char* glsl_version = "#version 150";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // Required on Mac
-#else
-    // GL 3.0 + GLSL 130
-    const char* glsl_version = "#version 130";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #endif
+
+	// version 4.3 for support of compute shaders
+	int opengl_Major = 0;
+	int opengl_Minor = 0;
+
+	// minimum version demand�e, mais glfw peut en cree une superieure
+	FoundBestOpenGLVersionAvailable(&opengl_Major, &opengl_Minor);
+
+	// base version
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, opengl_Major);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, opengl_Minor);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create window with graphics context
     GLFWwindow* mainWindow = glfwCreateWindow(1280, 720, "GlslOptimizer", 0, 0);
     if (mainWindow == 0)
         return 1;
+
     glfwMakeContextCurrent(mainWindow);
     glfwSwapInterval(1); // Enable vsync
 	glfwSetWindowCloseCallback(mainWindow, glfw_window_close_callback);
-
 
     if (gladLoadGL() == 0)
     {
         fprintf(stderr, "Failed to initialize OpenGL loader!\n");
         return 1;
     }
+
+	std::string glslVersion = GLVersionChecker::Instance()->GetGlslVersionHeader();
 
 #ifdef MSVC
 	//#ifndef _DEBUG
@@ -88,7 +131,7 @@ int main(int, char**argv)
 
     // Setup Platform/Renderer bindings
     ImGui_ImplGlfw_InitForOpenGL(mainWindow, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
+    ImGui_ImplOpenGL3_Init(glslVersion.c_str());
 
 	// load memory font file
 	ImGui::GetIO().Fonts->AddFontDefault();

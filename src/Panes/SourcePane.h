@@ -15,19 +15,25 @@
  */
 #pragma once
 
-#ifdef _DEBUG
-
 #include <imgui/imgui.h>
 
 #include <stdint.h>
 #include <string>
 #include <map>
 
+#include "ImGuiColorTextEdit/TextEditor.h"
+
 class ProjectFile;
 class SourcePane
 {
+private:
+	TextEditor m_CodeEditor;
+
 public:
+	void Init();
 	int DrawPane(ProjectFile *vProjectFile, int vWidgetId);
+	std::string GetCode();
+	void SetCode(std::string vCode);
 
 public: // singleton
 	static SourcePane *Instance()
@@ -42,5 +48,3 @@ protected:
 	SourcePane& operator =(const SourcePane&) { return *this; }; // Prevent assignment
 	~SourcePane(); // Prevent unwanted destruction};
 };
-
-#endif
