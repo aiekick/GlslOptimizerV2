@@ -26,3 +26,7 @@
 	path = 3rdparty/ctools
 	url = https://github.com/aiekick/cTools.git
 	branch = master
+[submodule "3rdparty/ImGuiColorTextEdit"]
+	path = 3rdparty/ImGuiColorTextEdit
+	url = https://github.com/BalazsJako/ImGuiColorTextEdit.git
+	branch = master

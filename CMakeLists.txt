@@ -4,13 +4,14 @@ cmake_policy(SET CMP0054 NEW)
 cmake_policy(SET CMP0012 NEW)
 cmake_policy(SET CMP0023 NEW)
 
-set(PROJECT GlslOptimizer)
+set(PROJECT GlslOptimizerApp)
 
 enable_language(C CXX)
 
 project(${PROJECT} CXX)
 
 include(cmake/3rdparty.cmake)
+include(cmake/glslOpt.cmake)
 
 ## some defines for debug mode
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
@@ -132,6 +133,7 @@ include_directories(
 		${CTOOLS_INCLUDE_DIR}
 		${TINYXML2_INCLUDE_DIR}
 		${IMGUIFILEDIALOG_INCLUDE_DIR}
+		${GLSLOPTIMIZER_INCLUDE_DIR}	
 )
 
 target_link_libraries(${PROJECT} PRIVATE
@@ -142,4 +144,9 @@ target_link_libraries(${PROJECT} PRIVATE
         ${CTOOLS_LIBRARIES}
 		${TINYXML2_LIBRARIES}
 		${IMGUIFILEDIALOG_LIBRARIES}
+		${GLSLOPTIMIZER_LIBRARIES}	
 )
+
+message("GLSLOPTIMIZER_INCLUDE_DIR : ${GLSLOPTIMIZER_INCLUDE_DIR}")
+message("GLSLOPTIMIZER_LIB_DIR : ${GLSLOPTIMIZER_LIB_DIR}")
+message("GLSLOPTIMIZER_LIBRARIES : ${GLSLOPTIMIZER_LIBRARIES}")
