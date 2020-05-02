@@ -45,7 +45,7 @@ private:
 
 public:
 	void Init();
-	bool DrawToolBar(GLFWwindow *vWin, float vWidth, bool *vAnyWindowHovered);
+	bool DrawToolBar(float vWidth, bool *vAnyWindowHovered);
 	int DrawPane(ProjectFile *vProjectFile, int vWidgetId);
 	
 private:

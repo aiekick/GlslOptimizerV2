@@ -1007,3 +1007,45 @@ void ImGui::Header(const char *vName, float width)
 	ImGui::RenderFrame(bb.Min, bb.Max, col, true, style.FrameRounding);
 	ImGui::RenderTextClipped(bb.Min + style.FramePadding, bb.Max - style.FramePadding, vName, NULL, &label_size, style.ButtonTextAlign, &bb);
 }
+
+bool ImGui::CollapsingHeader(const char *vName, float vWidth, bool vOpened, bool *vPressed)
+{
+	if (!vPressed) return false;
+
+	ImGuiWindow* window = ImGui::GetCurrentWindow();
+	if (window->SkipItems)
+		return false;
+
+	ImGuiContext& g = *GImGui;
+	const ImGuiStyle& style = g.Style;
+	const ImGuiID id = window->GetID(vName);
+	ImVec2 label_size = ImGui::CalcTextSize(vName, NULL, true);
+	//label_size.x = ImMin(label_size.x, vWidth);
+	ImVec2 padding = ImGui::GetStyle().FramePadding;
+	const float text_base_offset_y = ImMax(0.0f, window->DC.CurrLineTextBaseOffset - padding.y); // Latch before ItemSize changes it
+
+	ImVec2 pos = window->DC.CursorPos;
+	ImVec2 nsize = ImGui::CalcItemSize(ImVec2(vWidth, label_size.y + style.FramePadding.y * 2.0f), label_size.x + style.FramePadding.x * 2.0f, label_size.y + style.FramePadding.y * 2.0f);
+
+	ImRect bb(pos, pos + nsize);
+	ImRect bbTrigger = bb;
+	ImGui::ItemSize(bb, style.FramePadding.y);
+	ImGui::ItemAdd(bb, id);
+
+	bool hovered, held;
+	*vPressed = ImGui::ButtonBehavior(bbTrigger, id, &hovered, &held, 0);
+	//ImGui::SetItemAllowOverlap();
+	if (*vPressed)
+	{
+		vOpened = !vOpened;
+	}
+
+	// Render
+	const ImU32 col = ImGui::GetColorU32((held && hovered) ? ImGuiCol_HeaderActive : hovered ? ImGuiCol_HeaderHovered : ImGuiCol_Header);
+	ImGui::RenderFrame(bb.Min, bb.Max, col, true, style.FrameRounding);
+	ImGui::RenderTextClipped(bb.Min + style.FramePadding, bb.Max - style.FramePadding, vName, NULL, &label_size, style.ButtonTextAlign, &bb);
+	ImGui::RenderArrow(window->DrawList, bb.Min + padding + ImVec2(0.0f, text_base_offset_y), ImGui::GetColorU32(ImGuiCol_Text),
+		(vOpened ? ImGuiDir_::ImGuiDir_Down : ImGuiDir_::ImGuiDir_Right), 1.0f);
+
+	return vOpened;
+}

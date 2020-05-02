@@ -8,7 +8,7 @@
 
 #include <FileHelper.h>
 
-#include "Helper/GLVersionChecker.h"
+#include "ctools/GLVersionChecker.h"
 #include "src/MainFrame.h"
 #include "Res/CustomFont.cpp"
 

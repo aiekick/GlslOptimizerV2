@@ -79,7 +79,7 @@ int OptimizerPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 template<typename T>
 inline void DrawBitWizeToolBar(T *vContainer)
 {
-	ImGui::PushID(++ImGui::GlovalVars::pushId);
+	ImGui::PushID(++OptimizerPane_WidgetId);
 	if (ImGui::Button("Alls"))
 	{
 		*vContainer = (T)(~(0)); // on inverse
@@ -97,7 +97,7 @@ inline void DrawBitWizeToolBar(T *vContainer)
 	ImGui::PopID();
 }
 
-bool OptimizerPane::DrawToolBar(GLFWwindow *vWin, float vWidth, bool *vAnyWindowHovered)
+bool OptimizerPane::DrawToolBar(float vWidth, bool *vAnyWindowHovered)
 {
 	bool change = false;
 
