@@ -23,6 +23,13 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui_internal.h"
 
+static int PUSHID = 10548;
+
+void ImGui::SetPUSHID(int vID)
+{
+	PUSHID = vID;
+}
+
 bool ImGui::SelectableWithBtn(
         const char* label,
         bool selected,
@@ -679,7 +686,7 @@ void ImGui::EndMainStatusBar()
 bool ImGui::Button(const char* label, const char* help)
 {
 	bool res = ImGui::Button(label);
-
+	
 	if (help)
 		if (ImGui::IsItemHovered())
 			ImGui::SetTooltip("%s", help);
@@ -938,13 +945,17 @@ bool ImGui::CheckBoxDefault(const char *vName, bool *vVar, bool vDefault, const 
 
 	float padding = ImGui::GetStyle().FramePadding.x;
 
+	ImGui::PushID(++PUSHID);
 	change = ImGui::Button("R");
+	ImGui::PopID();
 	if (change)
 		*vVar = vDefault;
 
 	ImGui::SameLine();
 
+	ImGui::PushID(++PUSHID);
 	change |= ImGui::Checkbox(vName, vVar);
+	ImGui::PopID();
 
 	if (vHelp)
 		if (ImGui::IsItemHovered())
@@ -964,16 +975,20 @@ bool ImGui::SliderIntDefault(float vWidth, const char *vName, int *vVar, int vIn
 		vWidth -= ImGui::GetStyle().ScrollbarSize;
 	}
 
+	ImGui::PushID(++PUSHID);
 	change = ImGui::Button("R");
+	ImGui::PopID();
 	float w = vWidth - ImGui::GetItemRectSize().x - padding * 2.0f;
 	if (change)
 		*vVar = vDefault;
 
 	ImGui::SameLine();
 
+	ImGui::PushID(++PUSHID);
 	ImGui::PushItemWidth(w);
 	change |= ImGui::SliderInt(vName, vVar, vInf, vSup, "%.0f");
 	ImGui::PopItemWidth();
+	ImGui::PopID();
 
 	return change;
 }

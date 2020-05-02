@@ -30,6 +30,8 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui_internal.h"
 
+#include "ImGuiFileDialog/ImGuiFileDialog/ImGuiFileDialog.h"
+
 #include <cTools.h>
 #include <FileHelper.h>
 
@@ -40,11 +42,6 @@ static int OptimizerPane_WidgetId = 0;
 OptimizerPane::OptimizerPane() = default;
 OptimizerPane::~OptimizerPane() = default;
 
-void OptimizerPane::Init()
-{
-	
-}
-
 ///////////////////////////////////////////////////////////////////////////////////
 //// IMGUI PANE ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
@@ -52,6 +49,8 @@ void OptimizerPane::Init()
 int OptimizerPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 {
 	OptimizerPane_WidgetId = vWidgetId;
+
+	ImGui::SetPUSHID(OptimizerPane_WidgetId);
 
 	if (GuiLayout::m_Pane_Shown & PaneFlags::PANE_OPTIMIZER)
 	{
@@ -66,7 +65,96 @@ int OptimizerPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 		{
 			if (vProjectFile &&  vProjectFile->IsLoaded())
 			{
-				DrawToolBar(-1);
+				ImGui::Header("Shader File");
+
+				if (ImGui::Button("Open Shader"))
+				{
+					igfd::ImGuiFileDialog::Instance()->OpenModal("ShaderFileDlg", "Open Shader File", ".glsl\0.vert\0.ctrl\0.eval\0.geom\0.frag\0\0", ".");
+				}
+
+				ImGui::Header("Shader Mode");
+
+				ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Vertex", "Vertex Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_VERTEX);
+				ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Tess Control", "Tesselation Control Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_TESS_CTRL);
+				ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Tess Eval", "Tesselation Evaluation Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_TESS_EVAL);
+				ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Geometry", "Geometry Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_GEOMETRY);
+				ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Fragment", "Fragment Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_FRAGMENT);
+
+				ImGui::Header("Opengl Version");
+
+				ImGui::Indent();
+				{
+					if (ImGui::BeginCombo("##Opengl Version", m_Current_OpenGlVersionStruct.OpenglVersion.c_str()))
+					{
+						for (auto it = GLVersionChecker::Instance()->GetOpenglVersionMap()->begin();
+							it != GLVersionChecker::Instance()->GetOpenglVersionMap()->end(); ++it)
+						{
+							if (it->second.supported)
+							{
+								if (ImGui::Selectable(it->second.OpenglVersion.c_str(),
+									it->second.OpenglVersion == m_Current_OpenGlVersionStruct.OpenglVersion))
+								{
+									m_Current_OpenGlVersionStruct = it->second;
+								}
+							}
+						}
+						ImGui::EndCombo();
+					}
+
+					if (m_Current_OpenGlVersionStruct.DefaultGlslVersionInt != 100 &&
+						m_Current_OpenGlVersionStruct.DefaultGlslVersionInt != 300)
+					{
+						ImGui::Indent();
+						static int _targetType = (int)m_ApiTarget;
+						if (ImGui::Combo("##ApiTarget", &_targetType, "Compat\0Core\0\0"))
+						{
+							m_ApiTarget = (GlslConvert::ApiTarget)_targetType;
+						}
+						ImGui::Unindent();
+					}
+				}
+				ImGui::Unindent();
+
+				ImGui::Header("Language Target");
+				ImGui::Indent();
+				{
+					static int _conversionTarget = (int)m_LanguageTarget;
+					if (ImGui::Combo("##LanguageTarget", &_conversionTarget, "MESA AST\0MESA IR\0GLSL\0\0"))
+					{
+						m_LanguageTarget = (GlslConvert::LanguageTarget)_conversionTarget;
+					}
+				}
+				ImGui::Unindent();
+
+				ImGui::Header("Generate");
+				ImGui::Indent();
+				{
+					if (ImGui::Button("Optimize)"))
+					{
+						Generate();
+					}
+
+					ImGui::Separator();
+
+					ImGui::TextColored(ImVec4(1, 1, 0, 1), "Control :");
+					ImGui::Indent();
+					{
+						ImGui::CheckBoxBitWize<GlslConvert::ControlFlags>("Partial Shader", "Not Linked !\nso some optimizations will not been made",
+							&m_OptimizationStruct.controlFlags, GlslConvert::ControlFlags::CONTROL_DO_PARTIAL_SHADER, false);
+						if (!(m_OptimizationStruct.controlFlags & GlslConvert::ControlFlags::CONTROL_DO_PARTIAL_SHADER))
+						{
+							ImGui::Separator();
+							ImGui::CheckBoxBitWize<GlslConvert::ControlFlags>("Skip Preprocessor", "preprocessor directives and comments will be removed before link",
+								&m_OptimizationStruct.controlFlags, GlslConvert::ControlFlags::CONTROL_SKIP_PREPROCESSING, false);
+						}
+					}
+					ImGui::Unindent();
+
+					float y = ImGui::GetContentRegionAvail().y;
+					DrawOptimizationFlags(ImVec2(-1, y));
+					DrawCompilerFlags(ImVec2(-1, y));
+				}
+				ImGui::Unindent();
 			}
 		}
 
@@ -74,6 +162,20 @@ int OptimizerPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 	}
 
 	return OptimizerPane_WidgetId;
+}
+
+void OptimizerPane::DrawDialogAndPopups(ProjectFile *vProjectFile, ImVec2 vMin, ImVec2 vMax)
+{
+	if (igfd::ImGuiFileDialog::Instance()->FileDialog("ShaderFileDlg",
+		ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking, vMin, vMax))
+	{
+		if (igfd::ImGuiFileDialog::Instance()->IsOk)
+		{
+			LoadShaderFile(igfd::ImGuiFileDialog::Instance()->GetFilepathName());
+		}
+
+		igfd::ImGuiFileDialog::Instance()->CloseDialog("ShaderFileDlg");
+	}
 }
 
 template<typename T>
@@ -95,104 +197,6 @@ inline void DrawBitWizeToolBar(T *vContainer)
 		*vContainer = (T)(~(*vContainer)); // on inverse
 	}
 	ImGui::PopID();
-}
-
-bool OptimizerPane::DrawToolBar(float vWidth)
-{
-	bool change = false;
-
-	ImGui::Header("Shader File");
-
-	if (ImGui::Button("Open Shader"))
-	{
-
-	}
-
-	ImGui::Header("Shader Mode");
-
-	ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Vertex", "Vertex Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_VERTEX);
-	ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Tess Control", "Tesselation Control Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_TESS_CTRL);
-	ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Tess Eval", "Tesselation Evaluation Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_TESS_EVAL);
-	ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Geometry", "Geometry Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_GEOMETRY);
-	ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Fragment", "Fragment Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_FRAGMENT);
-
-	ImGui::Header("Opengl Version");
-	
-	ImGui::Indent();
-	{
-		if (ImGui::BeginCombo("##Opengl Version", m_Current_OpenGlVersionStruct.OpenglVersion.c_str()))
-		{
-			for (auto it = GLVersionChecker::Instance()->GetOpenglVersionMap()->begin();
-				it != GLVersionChecker::Instance()->GetOpenglVersionMap()->end(); ++it)
-			{
-				if (it->second.supported)
-				{
-					if (ImGui::Selectable(it->second.OpenglVersion.c_str(),
-						it->second.OpenglVersion == m_Current_OpenGlVersionStruct.OpenglVersion))
-					{
-						m_Current_OpenGlVersionStruct = it->second;
-					}
-				}
-			}
-			ImGui::EndCombo();
-		}
-
-		if (m_Current_OpenGlVersionStruct.DefaultGlslVersionInt != 100 &&
-			m_Current_OpenGlVersionStruct.DefaultGlslVersionInt != 300)
-		{
-			ImGui::Indent();
-			static int _targetType = (int)m_ApiTarget;
-			if (ImGui::Combo("##ApiTarget", &_targetType, "Compat\0Core\0\0"))
-			{
-				m_ApiTarget = (GlslConvert::ApiTarget)_targetType;
-			}
-			ImGui::Unindent();
-		}
-	}
-	ImGui::Unindent();
-
-	ImGui::Header("Language Target");
-	ImGui::Indent();
-	{
-		static int _conversionTarget = (int)m_LanguageTarget;
-		if (ImGui::Combo("##LanguageTarget", &_conversionTarget, "MESA AST\0MESA IR\0GLSL\0\0"))
-		{
-			m_LanguageTarget = (GlslConvert::LanguageTarget)_conversionTarget;
-		}
-	}
-	ImGui::Unindent();
-
-	ImGui::Header("Generate");
-	ImGui::Indent();
-	{
-		if (ImGui::Button("Optimize)"))
-		{
-			Generate();
-		}
-
-		ImGui::Separator();
-
-		ImGui::TextColored(ImVec4(1, 1, 0, 1), "Control :");
-		ImGui::Indent();
-		{
-			ImGui::CheckBoxBitWize<GlslConvert::ControlFlags>("Partial Shader", "Not Linked !\nso some optimizations will not been made",
-				&m_OptimizationStruct.controlFlags, GlslConvert::ControlFlags::CONTROL_DO_PARTIAL_SHADER, false);
-			if (!(m_OptimizationStruct.controlFlags & GlslConvert::ControlFlags::CONTROL_DO_PARTIAL_SHADER))
-			{
-				ImGui::Separator();
-				ImGui::CheckBoxBitWize<GlslConvert::ControlFlags>("Skip Preprocessor", "preprocessor directives and comments will be removed before link",
-					&m_OptimizationStruct.controlFlags, GlslConvert::ControlFlags::CONTROL_SKIP_PREPROCESSING, false);
-			}
-		}
-		ImGui::Unindent();
-
-		float y = ImGui::GetContentRegionAvail().y;
-		DrawOptimizationFlags(ImVec2(vWidth, y));
-		DrawCompilerFlags(ImVec2(vWidth, y));
-	}
-	ImGui::Unindent();
-
-	return change;
 }
 
 void OptimizerPane::DrawOptimizationFlags(ImVec2 vSize)
@@ -441,3 +445,9 @@ void OptimizerPane::Generate()
 	TargetPane::Instance()->SetCode(optCode);
 }
 
+void OptimizerPane::LoadShaderFile(const std::string& vFilePathName)
+{
+	auto res = FileHelper::Instance()->LoadFileToString(vFilePathName);
+
+	SourcePane::Instance()->SetCode(res);
+}

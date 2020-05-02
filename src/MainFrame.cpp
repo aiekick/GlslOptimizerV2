@@ -32,6 +32,7 @@
 #include "Helper/ImGuiThemeHelper.h"
 #include "Helper/Messaging.h"
 #include "Project/ProjectFile.h"
+#include "Panes/OptimizerPane.h"
 #include "Res/CustomFont.h"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
@@ -291,9 +292,7 @@ void MainFrame::DisplayDialogsAndPopups()
 
 	if (m_ProjectFile.IsLoaded())
 	{
-		//SourceFontPane::DrawDialosAndPopups(&m_ProjectFile);
-		//GeneratorPane::DrawDialosAndPopups(&m_ProjectFile);
-
+		OptimizerPane::Instance()->DrawDialogAndPopups(&m_ProjectFile, min, max);
 	}
 
 	if (igfd::ImGuiFileDialog::Instance()->FileDialog("NewProjectDlg",
@@ -410,6 +409,8 @@ limitations under the License.)", "https://github.com/aiekick/GlslOptimizer/blob
 		ImGui::ClickableTextUrl("Sean Barrett @Nothings", "https://twitter.com/nothings");
 		//tinyxml2
 		ImGui::ClickableTextUrl("tinyxml2 (ZLIB)", "https://github.com/leethomason/tinyxml2");
+		//ImGuiColorTextEdit
+		ImGui::ClickableTextUrl("ImGuiColorTextEdit (MIT)", "https://github.com/BalazsJako/ImGuiColorTextEdit");
 		//dirent
 		ImGui::ClickableTextUrl("dirent (MIT)", "https://github.com/tronkko/dirent/blob/master/include/dirent.h");
 		//cTools

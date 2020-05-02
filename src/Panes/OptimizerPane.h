@@ -44,11 +44,11 @@ private:
 	GlslConvert::ShaderStage m_ShaderType = GlslConvert::ShaderStage::MESA_SHADER_FRAGMENT;
 
 public:
-	void Init();
-	bool DrawToolBar(float vWidth);
 	int DrawPane(ProjectFile *vProjectFile, int vWidgetId);
-	
+	void DrawDialogAndPopups(ProjectFile *vProjectFile, ImVec2 vMin, ImVec2 vMax);
+
 private:
+	void LoadShaderFile(const std::string& vFilePathName);
 	void Generate();
 	void DrawOptimizationFlags(ImVec2 vSize);
 	void DrawCompilerFlags(ImVec2 vSize);
