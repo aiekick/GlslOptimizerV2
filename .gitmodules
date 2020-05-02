@@ -5,9 +5,11 @@
 [submodule "3rdparty/dirent"]
 	path = 3rdparty/dirent
 	url = https://github.com/tronkko/dirent.git
+	branch = master
 [submodule "3rdparty/tinyxml2"]
 	path = 3rdparty/tinyxml2
 	url = https://github.com/leethomason/tinyxml2.git
+	branch = master
 [submodule "3rdparty/glad"]
 	path = 3rdparty/glad
 	url = https://github.com/Dav1dde/glad.git
@@ -19,6 +21,8 @@
 [submodule "3rdparty/glfw"]
 	path = 3rdparty/glfw
 	url = https://github.com/glfw/glfw
+	branch = master
 [submodule "3rdparty/ctools"]
 	path = 3rdparty/ctools
 	url = https://github.com/aiekick/cTools.git
+	branch = master
