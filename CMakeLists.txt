@@ -54,9 +54,6 @@ file(GLOB PROJECT_HELPER
 file(GLOB PROJECT_IMGUIIMPL
 		${CMAKE_SOURCE_DIR}/src/ImguiImpl/*.cpp 
 		${CMAKE_SOURCE_DIR}/src/ImguiImpl/*.h)
-file(GLOB PROJECT_GENERATOR
-		${CMAKE_SOURCE_DIR}/src/Generator/*.cpp 
-		${CMAKE_SOURCE_DIR}/src/Generator/*.h)
 file(GLOB PROJECT_RES
 		${CMAKE_SOURCE_DIR}/src/Res/*.cpp 
 		${CMAKE_SOURCE_DIR}/src/Res/*.h)
@@ -69,8 +66,8 @@ file(GLOB PROJECT_PROJECT
 file(GLOB PROJECT_PANES
 		${CMAKE_SOURCE_DIR}/src/Panes/*.cpp 
 		${CMAKE_SOURCE_DIR}/src/Panes/*.h)
+source_group(main FILES ${PROJECT_SOURCES})
 source_group(src FILES ${PROJECT_SRC})
-source_group(src\\Generator FILES ${PROJECT_GENERATOR})
 source_group(src\\Helper FILES ${PROJECT_HELPER})
 source_group(src\\ImguiImpl FILES ${PROJECT_IMGUIIMPL})
 source_group(src\\Panes FILES ${PROJECT_PANES})
