@@ -78,9 +78,8 @@ void GuiLayout::ApplyInitialDockingLayout(ImVec2 vSize)
 	ImGui::DockBuilderAddNode(m_DockSpaceID, ImGuiDockNodeFlags_DockSpace); // Add empty node
 	ImGui::DockBuilderSetNodeSize(m_DockSpaceID, vSize);
 
-	float leftWidth = 250.0f;
-	float rightWidth = 310.0f;
-
+	float leftWidth = 350.0f;
+	
 	ImGuiID dockMainID = m_DockSpaceID; // This variable will track the document node, however we are not using it here as we aren't docking anything into it.
 	ImGuiID dockOptimizerID = ImGui::DockBuilderSplitNode(dockMainID, ImGuiDir_Left, leftWidth / vSize.x, nullptr, &dockMainID);
 	ImGuiID dockRightID = ImGui::DockBuilderSplitNode(dockMainID, ImGuiDir_Right, 0.5f, nullptr, &dockMainID);

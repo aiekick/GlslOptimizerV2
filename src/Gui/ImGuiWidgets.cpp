@@ -971,9 +971,8 @@ bool ImGui::SliderIntDefault(float vWidth, const char *vName, int *vVar, int vIn
 
 	ImGui::SameLine();
 
+	ImGui::PushItemWidth(w);
 	change |= ImGui::SliderInt(vName, vVar, vInf, vSup, "%.0f");
-
-	ImGui::PopID();
 	ImGui::PopItemWidth();
 
 	return change;

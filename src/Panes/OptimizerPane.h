@@ -29,7 +29,6 @@ class ProjectFile;
 class OptimizerPane
 {
 private:
-	TextEditor m_CodeEditor;
 	enum OptimizerPaneFlags
 	{
 		OPT_PANE_NONE = 0,
@@ -42,10 +41,11 @@ private:
 	GlslConvert::ApiTarget m_ApiTarget = GlslConvert::ApiTarget::API_OPENGL_CORE;
 	GlslConvert::LanguageTarget m_LanguageTarget = GlslConvert::LanguageTarget::LANGUAGE_TARGET_GLSL;
 	GlslConvert::OptimizationStruct m_OptimizationStruct;
+	GlslConvert::ShaderStage m_ShaderType = GlslConvert::ShaderStage::MESA_SHADER_FRAGMENT;
 
 public:
 	void Init();
-	bool DrawToolBar(float vWidth, bool *vAnyWindowHovered);
+	bool DrawToolBar(float vWidth);
 	int DrawPane(ProjectFile *vProjectFile, int vWidgetId);
 	
 private:

@@ -40,6 +40,7 @@ TargetPane::~TargetPane() = default;
 void TargetPane::Init()
 {
 	m_CodeEditor.SetLanguageDefinition(TextEditor::LanguageDefinition::GLSL());
+	m_CodeEditor.SetPalette(TextEditor::GetLightPalette());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////

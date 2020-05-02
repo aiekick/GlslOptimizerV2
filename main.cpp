@@ -46,6 +46,7 @@ bool IsGlversionSupported(int vMajor, int vMinor)
 		res = true;
 		glfwDestroyWindow(hnd);
 	}
+	glfwWindowHint(GLFW_VISIBLE, GL_TRUE);
 
 	return res;
 }

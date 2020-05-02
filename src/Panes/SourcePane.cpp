@@ -40,6 +40,7 @@ SourcePane::~SourcePane() = default;
 void SourcePane::Init()
 {
 	m_CodeEditor.SetLanguageDefinition(TextEditor::LanguageDefinition::GLSL());
+	m_CodeEditor.SetPalette(TextEditor::GetLightPalette());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////

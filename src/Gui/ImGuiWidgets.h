@@ -45,11 +45,23 @@ namespace ImGui
 			vLabel, vHelp, vContainer, vFlag, vWidth, 
 			vOneOrZeroAtTime, vAlwaysOne, vFlagsToTakeIntoAccount, disabled);
 	}*/
+	template<typename T>
+	IMGUI_API bool RadioButtonLabeled_RadioEnum(const char *vLabel, const char *vHelp, T *vContainer, T vFlag, float vWidth = 0.0f)
+	{
+		bool selected = (*vContainer == vFlag);
+		ImGui::PushItemWidth(vWidth);
+		bool res = RadioButtonLabeled(vLabel, vHelp, &selected, vDisableSelection);
+		ImGui::PopItemWidth();
+		if (res)
+		{
+			*vContainer = vFlag;
+		}
+	}
 	template<typename T> 
 	IMGUI_API bool RadioButtonLabeled_BitWize(
 		const char *vLabel, const char *vHelp, T *vContainer, T vFlag,
 		float vWidth = 0.0f,
-		bool vOneOrZeroAtTime = false, //only one selcted at a time
+		bool vOneOrZeroAtTime = false, //only one selected at a time
 		bool vAlwaysOne = true, // radio behavior, always one selected
 		T vFlagsToTakeIntoAccount = (T)0,
 		bool vDisableSelection = false) // radio witl use only theses flags

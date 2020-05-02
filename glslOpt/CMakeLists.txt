@@ -8,72 +8,95 @@ enable_language(CXX)
 
 file(GLOB PROJECT_SRC 
 ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h)
 file(GLOB PROJECT_SRC_COMPILER
 ${CMAKE_CURRENT_SOURCE_DIR}/src/compiler/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/compiler/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/compiler/*.h)
 file(GLOB PROJECT_SRC_GETOPT
 ${CMAKE_CURRENT_SOURCE_DIR}/src/getopt/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/getopt/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/getopt/*.h)
 file(GLOB PROJECT_SRC_MESA
 ${CMAKE_CURRENT_SOURCE_DIR}/src/mesa/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/mesa/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/mesa/*.h)
 file(GLOB PROJECT_SRC_UTIL
 ${CMAKE_CURRENT_SOURCE_DIR}/src/util/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/util/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/util/*.h)
 file(GLOB PROJECT_SRC_COMPILER_GLSL
 ${CMAKE_CURRENT_SOURCE_DIR}/src/compiler/glsl/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/compiler/glsl/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/compiler/glsl/*.h)
 file(GLOB PROJECT_SRC_COMPILER_GLSL_GLCPP
 ${CMAKE_CURRENT_SOURCE_DIR}/src/compiler/glsl/glcpp/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/compiler/glsl/glcpp/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/compiler/glsl/glcpp/*.h)
 file(GLOB PROJECT_SRC_MESA_MAIN
 ${CMAKE_CURRENT_SOURCE_DIR}/src/mesa/main/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/mesa/main/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/mesa/main/*.h)
 file(GLOB PROJECT_SRC_MESA_PROGRAM
 ${CMAKE_CURRENT_SOURCE_DIR}/src/mesa/program/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/mesa/program/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/mesa/program/*.h)
 file(GLOB PROJECT_SRC_UTIL_SHA1
 ${CMAKE_CURRENT_SOURCE_DIR}/src/util/sha1/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/util/sha1/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/util/sha1/*.h)
 file(GLOB PROJECT_SRC_MESA_MATH
 ${CMAKE_CURRENT_SOURCE_DIR}/src/mesa/math/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/mesa/math/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/mesa/math/*.h)
 file(GLOB PROJECT_SRC_MESA_VBO
 ${CMAKE_CURRENT_SOURCE_DIR}/src/mesa/vbo/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/mesa/vbo/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/mesa/vbo/*.h)
 file(GLOB PROJECT_SRC_GALLIUM
 ${CMAKE_CURRENT_SOURCE_DIR}/src/gallium/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/gallium/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/gallium/*.h)
 file(GLOB PROJECT_SRC_GALLIUM_AUXILIARY
 ${CMAKE_CURRENT_SOURCE_DIR}/src/gallium/auxiliary/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/gallium/auxiliary/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/gallium/auxiliary/*.h)
 file(GLOB PROJECT_SRC_GALLIUM_AUXILIARY_UTIL
 ${CMAKE_CURRENT_SOURCE_DIR}/src/gallium/auxiliary/util/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/gallium/auxiliary/util/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/gallium/auxiliary/util/*.h)
 file(GLOB PROJECT_SRC_GALLIUM_INCLUDE
 ${CMAKE_CURRENT_SOURCE_DIR}/src/gallium/include/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/gallium/include/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/gallium/include/*.h)
 file(GLOB PROJECT_SRC_GALLIUM_INCLUDE_PIPE
 ${CMAKE_CURRENT_SOURCE_DIR}/src/gallium/include/pipe/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/gallium/include/pipe/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/gallium/include/pipe/*.h)
 file(GLOB PROJECT_SRC_MAPI
 ${CMAKE_CURRENT_SOURCE_DIR}/src/mapi/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/mapi/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/mapi/*.h)
 file(GLOB PROJECT_SRC_MAPI_GLAPI
 ${CMAKE_CURRENT_SOURCE_DIR}/src/mapi/glapi/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/mapi/glapi/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/mapi/glapi/*.h)
 file(GLOB PROJECT_SRC_CODE
 ${CMAKE_CURRENT_SOURCE_DIR}/src/code/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/code/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/code/*.h)
 file(GLOB PROJECT_INCLUDE
 ${CMAKE_CURRENT_SOURCE_DIR}/include/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/include/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
 file(GLOB PROJECT_INCLUDE_GL
 ${CMAKE_CURRENT_SOURCE_DIR}/include/GL/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/include/GL/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/include/GL/*.h)
 file(GLOB PROJECT_INCLUDE_C11
 ${CMAKE_CURRENT_SOURCE_DIR}/include/c11/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/include/c11/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/include/c11/*.h)
 source_group(src FILES ${PROJECT_SRC})
 source_group(src\\compiler FILES ${PROJECT_SRC_COMPILER})
@@ -102,7 +125,6 @@ source_group(include\\c11 FILES ${PROJECT_INCLUDE_C11})
 add_definitions(-D_LIB)
 add_definitions(-DNOMINMAX)
 add_definitions(-D__STDC_VERSION__=199901L)
-
 add_definitions(-D__STDC_LIMIT_MACROS)
 add_definitions(-D__STDC_FORMAT_MACROS)
 add_definitions(-D__STDC_CONSTANT_MACROS)
@@ -125,6 +147,7 @@ elseif(WIN32)
 	if(MINGW)
 		add_definitions(-DMINGW32)
 		add_definitions(-DHAVE_STRTOK_R)
+		add_definitions(-DHAVE___BUILTIN_FFS)
 	endif()
 endif()
 

@@ -42,7 +42,7 @@ OptimizerPane::~OptimizerPane() = default;
 
 void OptimizerPane::Init()
 {
-	m_CodeEditor.SetLanguageDefinition(TextEditor::LanguageDefinition::GLSL());
+	
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -66,7 +66,7 @@ int OptimizerPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 		{
 			if (vProjectFile &&  vProjectFile->IsLoaded())
 			{
-				
+				DrawToolBar(-1);
 			}
 		}
 
@@ -97,21 +97,24 @@ inline void DrawBitWizeToolBar(T *vContainer)
 	ImGui::PopID();
 }
 
-bool OptimizerPane::DrawToolBar(float vWidth, bool *vAnyWindowHovered)
+bool OptimizerPane::DrawToolBar(float vWidth)
 {
 	bool change = false;
 
-	ImGui::BeginChild("#OptimizerSystemToolBar", ImVec2(vWidth, -1));
+	ImGui::Header("Shader File");
 
-	if (vAnyWindowHovered && ImGui::IsWindowHovered()) *vAnyWindowHovered = true;
+	if (ImGui::Button("Open Shader"))
+	{
 
-	ImGui::Header("Shader Section");
+	}
 
-	// vtx
-	// ctrl
-	// eval
-	// geom
-	// frag
+	ImGui::Header("Shader Mode");
+
+	ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Vertex", "Vertex Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_VERTEX);
+	ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Tess Control", "Tesselation Control Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_TESS_CTRL);
+	ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Tess Eval", "Tesselation Evaluation Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_TESS_EVAL);
+	ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Geometry", "Geometry Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_GEOMETRY);
+	ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Fragment", "Fragment Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_FRAGMENT);
 
 	ImGui::Header("Opengl Version");
 	
@@ -427,21 +430,9 @@ void OptimizerPane::Generate()
 {
 	std::string codeToOptimize = SourcePane::Instance()->GetCode();
 
-	GlslConvert::ShaderStage shaderType = GlslConvert::ShaderStage::MESA_SHADER_FRAGMENT;
-	/*if (m_Current_ShaderParsedCodeStruct.shaderCodePart == ShaderCodePartEnum::SHADER_CODE_PART_VERTEX_SECTION)
-		shaderType = GlslConvert::ShaderStage::MESA_SHADER_VERTEX;
-	if (m_Current_ShaderParsedCodeStruct.shaderCodePart == ShaderCodePartEnum::SHADER_CODE_PART_GEOMETRY_SECTION)
-		shaderType = GlslConvert::ShaderStage::MESA_SHADER_GEOMETRY;
-	if (m_Current_ShaderParsedCodeStruct.shaderCodePart == ShaderCodePartEnum::SHADER_CODE_PART_TESSELATION_CONTROL_SECTION)
-		shaderType = GlslConvert::ShaderStage::MESA_SHADER_TESS_CTRL;
-	if (m_Current_ShaderParsedCodeStruct.shaderCodePart == ShaderCodePartEnum::SHADER_CODE_PART_TESSELATION_EVAL_SECTION)
-		shaderType = GlslConvert::ShaderStage::MESA_SHADER_TESS_EVAL;
-	if (m_Current_ShaderParsedCodeStruct.shaderCodePart == ShaderCodePartEnum::SHADER_CODE_PART_COMPUTE_SECTION)
-		shaderType = GlslConvert::ShaderStage::MESA_SHADER_COMPUTE;*/
-
 	std::string optCode = GlslConvert::Instance()->Optimize(
 		codeToOptimize,
-		shaderType,
+		m_ShaderType,
 		m_ApiTarget,
 		m_LanguageTarget,
 		m_Current_OpenGlVersionStruct.DefaultGlslVersionInt,
