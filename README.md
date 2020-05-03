@@ -20,3 +20,8 @@ I have exposed the most of params i have found in Mesa3D for better optimization
 I am very interested in graphic programming but as a self-learning guy, im in no way an expert.
 
 So if you feel like it, help me improve this Software that I make available in open source for that.
+
+## The module : 
+
+## The Standalone App :
+
