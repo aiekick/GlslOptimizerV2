@@ -58,3 +58,13 @@ Write/open your code and optimzie it : (see in the pane, all the params i exepos
 Customize the style ( the default theme is light but you can also customize app theme avec editor palette)
 ![Customize app Style](doc/CustomizeStyle.png)
 
+## Library used :
+
+* [Glfw - ZLIB](http://www.glfw.org/)
+* [Dear ImGui - Docking/tables branch - MIT](https://github.com/ocornut/imgui)
+* [Glad - MIT](https://github.com/Dav1dde/glad)
+* [tinyxml2 - ZLIB](https://github.com/leethomason/tinyxml2)
+* [ImGuiColorTextEdit - MIT](https://github.com/BalazsJako/ImGuiColorTextEdit)
+* [dirent - MIT]( https://github.com/tronkko/dirent)
+* [cTools - MIT](https://github.com/aiekick/cTools)
+* [ImGuiFileDialog - MIT](https://github.com/aiekick/ImGuiFileDialog)
