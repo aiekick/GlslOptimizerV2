@@ -34,7 +34,7 @@ private:
 		OPT_PANE_NONE = 0,
 		OPT_PANE_OPTIMIZATION = (1 << 0),
 		OPT_PANE_COMPILER = (1 << 1)
-	} m_OptimizerPaneFlags = OPT_PANE_NONE;
+	} m_OptimizerPaneFlags = OPT_PANE_OPTIMIZATION;
 
 private:
 	OpenGlVersionStruct m_Current_OpenGlVersionStruct;
@@ -44,6 +44,7 @@ private:
 	GlslConvert::ShaderStage m_ShaderType = GlslConvert::ShaderStage::MESA_SHADER_FRAGMENT;
 
 public:
+	void Init();
 	int DrawPane(ProjectFile *vProjectFile, int vWidgetId);
 	void DrawDialogAndPopups(ProjectFile *vProjectFile, ImVec2 vMin, ImVec2 vMax);
 

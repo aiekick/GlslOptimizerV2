@@ -42,6 +42,13 @@ static int OptimizerPane_WidgetId = 0;
 OptimizerPane::OptimizerPane() = default;
 OptimizerPane::~OptimizerPane() = default;
 
+void OptimizerPane::Init()
+{
+	auto v = GLVersionChecker::Instance()->GetOpenglVersionStruct(GLVersionChecker::Instance()->GetOpenglVersion());
+	if (v)
+		m_Current_OpenGlVersionStruct = *v;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////
 //// IMGUI PANE ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
@@ -72,18 +79,20 @@ int OptimizerPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 					igfd::ImGuiFileDialog::Instance()->OpenModal("ShaderFileDlg", "Open Shader File", ".glsl\0.vert\0.ctrl\0.eval\0.geom\0.frag\0\0", ".");
 				}
 
-				ImGui::Header("Shader Mode");
+				ImGui::Header("Shader Stage");
 
-				ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Vertex", "Vertex Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_VERTEX);
-				ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Tess Control", "Tesselation Control Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_TESS_CTRL);
-				ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Tess Eval", "Tesselation Evaluation Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_TESS_EVAL);
-				ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Geometry", "Geometry Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_GEOMETRY);
-				ImGui::RadioButtonLabeled_RadioEnum<GlslConvert::ShaderStage>("Fragment", "Fragment Stage", &m_ShaderType, GlslConvert::ShaderStage::MESA_SHADER_FRAGMENT);
-
+				static int _shaderStage = (int)GlslConvert::ShaderStage::MESA_SHADER_VERTEX;
+				_shaderStage = (int)m_ShaderType;
+				if (ImGui::Combo("##shaderstage", &_shaderStage, "Vertex\0Tesselation Control\0Tesselation Evaluation\0Geometry\0Fragment\0\0"))
+				{
+					m_ShaderType = (GlslConvert::ShaderStage)_shaderStage;
+				}
+				
 				ImGui::Header("Opengl Version");
 
 				ImGui::Indent();
 				{
+					ImGui::Text("Version code : %s", m_Current_OpenGlVersionStruct.DefineCode.c_str());
 					if (ImGui::BeginCombo("##Opengl Version", m_Current_OpenGlVersionStruct.OpenglVersion.c_str()))
 					{
 						for (auto it = GLVersionChecker::Instance()->GetOpenglVersionMap()->begin();
@@ -104,13 +113,11 @@ int OptimizerPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 					if (m_Current_OpenGlVersionStruct.DefaultGlslVersionInt != 100 &&
 						m_Current_OpenGlVersionStruct.DefaultGlslVersionInt != 300)
 					{
-						ImGui::Indent();
 						static int _targetType = (int)m_ApiTarget;
 						if (ImGui::Combo("##ApiTarget", &_targetType, "Compat\0Core\0\0"))
 						{
 							m_ApiTarget = (GlslConvert::ApiTarget)_targetType;
 						}
-						ImGui::Unindent();
 					}
 				}
 				ImGui::Unindent();
@@ -136,7 +143,7 @@ int OptimizerPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 
 					ImGui::Separator();
 
-					ImGui::TextColored(ImVec4(1, 1, 0, 1), "Control :");
+					ImGui::Text("Control :");
 					ImGui::Indent();
 					{
 						ImGui::CheckBoxBitWize<GlslConvert::ControlFlags>("Partial Shader", "Not Linked !\nso some optimizations will not been made",
@@ -433,6 +440,11 @@ void OptimizerPane::DrawInstructionToLowerFlags(ImVec2 vSize)
 void OptimizerPane::Generate()
 {
 	std::string codeToOptimize = SourcePane::Instance()->GetCode();
+
+	if (codeToOptimize.find("#version ") == std::string::npos)
+	{
+		codeToOptimize = m_Current_OpenGlVersionStruct.DefineCode + "\n\n" + codeToOptimize;
+	}
 
 	std::string optCode = GlslConvert::Instance()->Optimize(
 		codeToOptimize,

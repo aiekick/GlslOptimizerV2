@@ -38,7 +38,6 @@ public:
 	void setFromXml(tinyxml2::XMLElement* vElem, tinyxml2::XMLElement* vParent) override;
 
 public:
-	void ApplyStyleColorsDefault(ImGuiStyle* dst = nullptr);
 	void ApplyStyleColorsClassic(ImGuiStyle* dst = nullptr);
 	void ApplyStyleColorsDark(ImGuiStyle* dst = nullptr);
 	void ApplyStyleColorsLight(ImGuiStyle* dst = nullptr);

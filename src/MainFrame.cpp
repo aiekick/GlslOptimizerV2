@@ -57,7 +57,7 @@ void MainFrame::Init()
 	snprintf(buf, 255, "GlslOptimizer %s", GLSLOPTIMIZER_VERSION);
 	glfwSetWindowTitle(m_Window, buf);
 
-	ImGuiThemeHelper::Instance()->ApplyStyleColorsDefault();
+	ImGuiThemeHelper::Instance()->ApplyStyleColorsLight();
 	
 	LoadConfigFile("config.xml");
 
