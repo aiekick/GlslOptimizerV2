@@ -4,7 +4,7 @@ cmake_policy(SET CMP0054 NEW)
 cmake_policy(SET CMP0012 NEW)
 cmake_policy(SET CMP0023 NEW)
 
-enable_language(CXX)
+enable_language(C CXX)
 
 file(GLOB PROJECT_SRC 
 ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp 

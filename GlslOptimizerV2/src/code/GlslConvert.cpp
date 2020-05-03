@@ -420,6 +420,11 @@ void GlslConvert::DO_Optimization_Pass(
 	progress |= PASS(__VA_ARGS__);																	\
 	} while(false)																					\
 
+#define OPT_BIS(FLAG, PASS, ...) do {																	\
+	if ((vOptimizationStruct->optimizationFlags_Bis & OptimizationFlags_Bis::FLAG))	\
+	progress |= PASS(__VA_ARGS__);																	\
+	} while(false)																					\
+
 	bool progress = false;
 	int passes = 0;
 	do {
@@ -461,8 +466,8 @@ void GlslConvert::DO_Optimization_Pass(
 			else
 				OPT(OPT_constant_variable_unlinked, do_constant_variable_unlinked, vIr);
 			OPT(OPT_constant_folding, do_constant_folding, vIr);
-			OPT(OPT_minmax_prune, do_minmax_prune, vIr);
-			OPT(OPT_rebalance_tree, do_rebalance_tree, vIr);
+			OPT_BIS(OPT_minmax_prune, do_minmax_prune, vIr);
+			OPT_BIS(OPT_rebalance_tree, do_rebalance_tree, vIr);
 			OPT(OPT_algebraic, do_algebraic, vIr,
 				vOptimizationStruct->algebraicOptions.native_integers, vCompilerFlags);
 			OPT(OPT_lower_jumps, do_lower_jumps, vIr,
@@ -472,12 +477,12 @@ void GlslConvert::DO_Optimization_Pass(
 				vOptimizationStruct->lowerJumpsOptions.lower_continue,
 				vOptimizationStruct->lowerJumpsOptions.lower_break);
 			OPT(OPT_vec_index_to_swizzle, do_vec_index_to_swizzle, vIr);
-			OPT(OPT_lower_vector_insert, lower_vector_insert, vIr, 
+			OPT_BIS(OPT_lower_vector_insert, lower_vector_insert, vIr,
 				vOptimizationStruct->lowerVectorInsertOptions.lower_nonconstant_index);
 			OPT(OPT_optimize_swizzles, optimize_swizzles, vIr);
-			OPT(OPT_optimize_split_arrays, optimize_split_arrays, vIr, linked);
+			OPT_BIS(OPT_optimize_split_arrays, optimize_split_arrays, vIr, linked);
 			OPT(OPT_optimize_redundant_jumps, optimize_redundant_jumps, vIr);
-			if (OPT_FLAGS(vOptimizationStruct->optimizationFlags, OPT_set_unroll_Loops))
+			if (OPT_BIS_FLAGS(vOptimizationStruct->optimizationFlags_Bis, OPT_set_unroll_Loops))
 			{
 				if (vCompilerFlags->MaxUnrollIterations)
 				{

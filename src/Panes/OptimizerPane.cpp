@@ -191,19 +191,57 @@ inline bool DrawBitWizeToolBar(T *vContainer)
 	ImGui::PushID(++OptimizerPane_WidgetId);
 	if (ImGui::Button("Alls"))
 	{
-		*vContainer = (T)(~(0)); // on inverse
+		if (vContainer)
+			*vContainer = (T)(~(0)); // on inverse
 		change = true;
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("None"))
 	{
-		*vContainer = (T)(0);
+		if (vContainer)
+			*vContainer = (T)(0);
 		change = true;
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Inv"))
 	{
-		*vContainer = (T)(~(*vContainer)); // on inverse
+		if (vContainer)
+			*vContainer = (T)(~(*vContainer)); // on inverse
+		change = true;
+	}
+	ImGui::PopID();
+	return change;
+}
+
+template<typename T, typename U>
+inline bool DrawBitWizeToolBar2(T *vContainer, U *vContainerBis)
+{
+	bool change = false;
+	ImGui::PushID(++OptimizerPane_WidgetId);
+	if (ImGui::Button("Alls"))
+	{
+		if (vContainer)
+			*vContainer = (T)(~(0)); // on inverse
+		if (vContainerBis)
+			*vContainerBis = (U)(~(0)); // on inverse
+		change = true;
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("None"))
+	{
+		if (vContainer)
+			*vContainer = (T)(0);
+		if (vContainerBis)
+			*vContainerBis = (U)(0);
+		change = true;
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Inv"))
+	{
+		if (vContainer)
+			*vContainer = (T)(~(*vContainer)); // on inverse
+		if (vContainerBis)
+			*vContainerBis = (U)(~(*vContainerBis)); // on inverse
 		change = true;
 	}
 	ImGui::PopID();
@@ -215,17 +253,20 @@ bool OptimizerPane::DrawOptimizationFlags(ProjectFile *vProjectFile, ImVec2 vSiz
 	bool change = false;
 
 #define CHECK(STR, COM, FLAG, DEF) change |= ImGui::CheckBoxBitWize<GlslConvert::OptimizationFlags>(STR, COM, &vProjectFile->m_OptimizationStruct.optimizationFlags, GlslConvert::OptimizationFlags::FLAG, DEF)
+#define CHECK_BIS(STR, COM, FLAG, DEF) change |= ImGui::CheckBoxBitWize<GlslConvert::OptimizationFlags_Bis>(STR, COM, &vProjectFile->m_OptimizationStruct.optimizationFlags_Bis, GlslConvert::OptimizationFlags_Bis::FLAG, DEF)
 	float y = ImGui::GetCursorPosY();
 	if (ImGui::ImGui_CollapsingHeader_BitWize_OneAtATime<OptimizerPaneFlags>("Optimization Settings", -1, 
 		&m_OptimizerPaneFlags, OptimizerPaneFlags::OPT_PANE_OPTIMIZATION, false))
 	{
+		change |= DrawBitWizeToolBar2<GlslConvert::OptimizationFlags, GlslConvert::OptimizationFlags_Bis>(
+			&vProjectFile->m_OptimizationStruct.optimizationFlags,
+			&vProjectFile->m_OptimizationStruct.optimizationFlags_Bis);
+		ImGui::Separator();
 		vSize.x -= 10.0f;
 		vSize.y -= (ImGui::GetCursorPosY() - y) * 2.0f;
 		ImGui::BeginChild("##OptimizationSettings", vSize);
 		ImGui::Indent();
 		{
-			change |= DrawBitWizeToolBar<GlslConvert::OptimizationFlags>(&vProjectFile->m_OptimizationStruct.optimizationFlags);
-			ImGui::Separator();
 			CHECK("algebraic", 0, OPT_algebraic, true);
 			if (vProjectFile->m_OptimizationStruct.optimizationFlags & GlslConvert::OptimizationFlags::OPT_algebraic)
 			{
@@ -361,15 +402,15 @@ bool OptimizerPane::DrawOptimizationFlags(ProjectFile *vProjectFile, ImVec2 vSiz
 			ImGui::Separator();
 			CHECK("vectorize", 0, OPT_vectorize, true);
 			ImGui::Separator();
-			CHECK("minmax_prune", 0, OPT_minmax_prune, true);
+			CHECK_BIS("minmax_prune", 0, OPT_minmax_prune, true);
 			ImGui::Separator();
-			CHECK("rebalance_tree", 0, OPT_rebalance_tree, true);
+			CHECK_BIS("rebalance_tree", 0, OPT_rebalance_tree, true);
 			ImGui::Separator();
-			CHECK("lower_vector_insert", 0, OPT_lower_vector_insert, true);
+			CHECK_BIS("lower_vector_insert", 0, OPT_lower_vector_insert, true);
 			ImGui::Separator();
-			CHECK("optimize_split_arrays", 0, OPT_optimize_split_arrays, true);
+			CHECK_BIS("optimize_split_arrays", 0, OPT_optimize_split_arrays, true);
 			ImGui::Separator();
-			CHECK("set_unroll_Loops", 0, OPT_set_unroll_Loops, true);
+			CHECK_BIS("set_unroll_Loops", 0, OPT_set_unroll_Loops, true);
 		}
 		ImGui::Unindent();
 		ImGui::EndChild();
@@ -387,10 +428,10 @@ bool OptimizerPane::DrawCompilerFlags(ProjectFile *vProjectFile, ImVec2 vSize)
 	if (ImGui::ImGui_CollapsingHeader_BitWize_OneAtATime<OptimizerPaneFlags>("Generation Settings", 
 		-1, &m_OptimizerPaneFlags, OptimizerPaneFlags::OPT_PANE_COMPILER, false))
 	{
+		change |= DrawBitWizeToolBar<GlslConvert::CompilerFlags>(&vProjectFile->m_OptimizationStruct.compilerFlags);
 		ImGui::BeginChild("##GenerationSettings");
 		ImGui::Indent();
 		{
-			change |= DrawBitWizeToolBar<GlslConvert::CompilerFlags>(&vProjectFile->m_OptimizationStruct.compilerFlags);
 			CHECK("EmitNoLoops", 0, COMPILER_EmitNoLoops, false);
 			CHECK("EmitNoCont", 0, COMPILER_EmitNoCont, false);
 			CHECK("EmitNoMainReturn", 0, COMPILER_EmitNoMainReturn, false);

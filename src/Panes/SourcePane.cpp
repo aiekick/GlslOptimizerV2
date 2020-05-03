@@ -65,6 +65,10 @@ int SourcePane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 			if (vProjectFile &&  vProjectFile->IsLoaded())
 			{
 				m_CodeEditor.Render("Source", ImVec2(-1, -1), false);
+				if (m_CodeEditor.IsTextChanged())
+				{
+					vProjectFile->SetProjectChange();
+				}
 			}
 		}
 

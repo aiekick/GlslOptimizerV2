@@ -111,48 +111,54 @@ public:
 		LOWER_MUL64_TO_MUL_AND_MUL_HIGH = (1 << 22)
 
 	};
+
 #define OPT_FLAGS(CONTAINER, FLAG_TO_TEST) (CONTAINER & OptimizationFlags::FLAG_TO_TEST)
-	enum OptimizationFlags : long long // 64 bits max donc 63 en partant de 0
+	enum OptimizationFlags
 	{
-		OPT_algebraic								= (1LL << 0),	// c/o
-		OPT_common_optimization						= (1LL << 1),
-		OPT_constant_folding						= (1LL << 2),	// c/o
-		OPT_constant_propagation					= (1LL << 3),	// c/o
-		OPT_constant_variable						= (1LL << 4),	// c/o
-		OPT_constant_variable_unlinked				= (1LL << 5),	// c/o
-		OPT_copy_propagation_elements				= (1LL << 6),	// c/o
-		OPT_dead_code								= (1LL << 7),	// c/o
-		OPT_dead_code_local							= (1LL << 8),	// c/o
-		OPT_dead_code_unlinked						= (1LL << 9),	// c/o
-		OPT_dead_functions							= (1LL << 10),	// c/o
-		OPT_function_inlining						= (1LL << 11),	// c/o
-		OPT_if_simplification						= (1LL << 12),	// c/o
-		OPT_lower_discard							= (1LL << 13),
-		OPT_lower_variable_index_to_cond_assign		= (1LL << 14),
-		OPT_lower_instructions						= (1LL << 15),
-		OPT_lower_jumps								= (1LL << 16),	// c/o
-		OPT_lower_noise								= (1LL << 17),
-		OPT_lower_quadop_vector						= (1LL << 18),
-		OPT_lower_texture_projection				= (1LL << 19),
-		OPT_lower_if_to_cond_assign					= (1LL << 20),
-		OPT_mat_op_to_vec							= (1LL << 21),
-		OPT_optimize_swizzles						= (1LL << 22),
-		OPT_optimize_redundant_jumps				= (1LL << 23),	// c/o
-		OPT_structure_splitting						= (1LL << 24),	// c/o
-		OPT_tree_grafting							= (1LL << 25),	// c/o
-		OPT_vec_index_to_cond_assign				= (1LL << 26),
-		OPT_vec_index_to_swizzle					= (1LL << 27),	// c/o
-		OPT_flatten_nested_if_blocks				= (1LL << 28),
-		OPT_conditional_discard						= (1LL << 29),
-		OPT_flip_matrices							= (1LL << 30),
-		OPT_vectorize								= (1LL << 31),
-		OPT_minmax_prune							= (1LL << 32),
-		OPT_rebalance_tree							= (1LL << 33),
-		OPT_lower_vector_insert						= (1LL << 34),
-		OPT_optimize_split_arrays					= (1LL << 35),
-		OPT_set_unroll_Loops						= (1LL << 36),
+		OPT_algebraic								= (1 << 0),	// c/o
+		OPT_common_optimization						= (1 << 1),
+		OPT_constant_folding						= (1 << 2),	// c/o
+		OPT_constant_propagation					= (1 << 3),	// c/o
+		OPT_constant_variable						= (1 << 4),	// c/o
+		OPT_constant_variable_unlinked				= (1 << 5),	// c/o
+		OPT_copy_propagation_elements				= (1 << 6),	// c/o
+		OPT_dead_code								= (1 << 7),	// c/o
+		OPT_dead_code_local							= (1 << 8),	// c/o
+		OPT_dead_code_unlinked						= (1 << 9),	// c/o
+		OPT_dead_functions							= (1 << 10),	// c/o
+		OPT_function_inlining						= (1 << 11),	// c/o
+		OPT_if_simplification						= (1 << 12),	// c/o
+		OPT_lower_discard							= (1 << 13),
+		OPT_lower_variable_index_to_cond_assign		= (1 << 14),
+		OPT_lower_instructions						= (1 << 15),
+		OPT_lower_jumps								= (1 << 16),	// c/o
+		OPT_lower_noise								= (1 << 17),
+		OPT_lower_quadop_vector						= (1 << 18),
+		OPT_lower_texture_projection				= (1 << 19),
+		OPT_lower_if_to_cond_assign					= (1 << 20),
+		OPT_mat_op_to_vec							= (1 << 21),
+		OPT_optimize_swizzles						= (1 << 22),
+		OPT_optimize_redundant_jumps				= (1 << 23),	// c/o
+		OPT_structure_splitting						= (1 << 24),	// c/o
+		OPT_tree_grafting							= (1 << 25),	// c/o
+		OPT_vec_index_to_cond_assign				= (1 << 26),
+		OPT_vec_index_to_swizzle					= (1 << 27),	// c/o
+		OPT_flatten_nested_if_blocks				= (1 << 28),
+		OPT_conditional_discard						= (1 << 29),
+		OPT_flip_matrices							= (1 << 30),
+		OPT_vectorize								= (1 << 31),
 	};
 	
+#define OPT_BIS_FLAGS(CONTAINER, FLAG_TO_TEST) (CONTAINER & OptimizationFlags_Bis::FLAG_TO_TEST)
+	enum OptimizationFlags_Bis
+	{
+		OPT_minmax_prune = (1 << 0),
+		OPT_rebalance_tree = (1 << 1),
+		OPT_lower_vector_insert = (1 << 2),
+		OPT_optimize_split_arrays = (1 << 3),
+		OPT_set_unroll_Loops = (1 << 4),
+	};
+
 	struct OptimizationStruct
 	{
 		// dont save
@@ -163,6 +169,7 @@ public:
 		CompilerFlags compilerFlags = (GlslConvert::CompilerFlags)0;
 		ControlFlags controlFlags = (GlslConvert::ControlFlags)0;
 		OptimizationFlags optimizationFlags = (GlslConvert::OptimizationFlags)~0; // all
+		OptimizationFlags_Bis optimizationFlags_Bis = (GlslConvert::OptimizationFlags_Bis)~0; // all
 		InstructionToLowerFlags instructionToLowerFlags = (GlslConvert::InstructionToLowerFlags)~0; // all
 		
 		struct AlgebraicOptions

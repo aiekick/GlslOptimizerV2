@@ -20,6 +20,7 @@
 
 #include "Helper/Messaging.h"
 #include "Panes/SourcePane.h"
+#include "Panes/TargetPane.h"
 #include "Panes/OptimizerPane.h"
 
 #include <FileHelper.h>
@@ -44,8 +45,20 @@ void ProjectFile::Clear()
 	m_ProjectFilePath.clear();
 	m_IsLoaded = false;
 	m_IsThereAnyNotSavedChanged = false;
-	
+
+	SourcePane::Instance()->GetEditor()->Delete();
+	SourcePane::Instance()->GetEditor()->SetText("");
+	TargetPane::Instance()->GetEditor()->Delete();
+	TargetPane::Instance()->GetEditor()->SetText("");
+
+	m_ShaderStage = GlslConvert::ShaderStage::MESA_SHADER_FRAGMENT;
+	m_ApiTarget = GlslConvert::ApiTarget::API_OPENGL_CORE;
+	m_LanguageTarget = GlslConvert::LanguageTarget::LANGUAGE_TARGET_GLSL;
+	m_OptimizationStruct = GlslConvert::OptimizationStruct();
+
 	Messaging::Instance()->Clear();
+
+
 }
 
 void ProjectFile::New()
@@ -92,16 +105,16 @@ bool ProjectFile::LoadAs(const std::string& vFilePathName)
 		if (!code.empty())
 		{
 			SourcePane::Instance()->SetCode(code);
+			m_ProjectFilePathName = filePathName;
 
 			auto ps = FileHelper::Instance()->ParsePathFileName(filePathName);
 			if (ps.isOk)
 			{
-				std::string configFile = ps.GetFilePathWithNameExt(ps.name, ".conf");
+				std::string configFile = ps.GetFilePathWithNameExt(ps.name + "_" + ps.ext, ".conf");
 				if (FileHelper::Instance()->IsFileExist(configFile))
 				{
 					if (LoadConfigFile(configFile))
 					{
-						m_ProjectFilePathName = filePathName;
 						auto ps = FileHelper::Instance()->ParsePathFileName(m_ProjectFilePathName);
 						if (ps.isOk)
 						{
@@ -143,15 +156,12 @@ bool ProjectFile::SaveAs(const std::string& vFilePathName)
 		{
 			FileHelper::Instance()->SaveStringToFile(m_ProjectFilePathName, code);
 
-			std::string configFile = ps.GetFilePathWithNameExt(ps.name, ".conf");
-			if (FileHelper::Instance()->IsFileExist(configFile))
+			std::string configFile = ps.GetFilePathWithNameExt(ps.name + "_" + ps.ext, ".conf");
+			if (SaveConfigFile(configFile))
 			{
-				if (SaveConfigFile(configFile))
-				{
-					SetProjectChange(false);
+				SetProjectChange(false);
 
-					res = true;
-				}
+				res = true;
 			}
 		}
 	}
@@ -210,7 +220,6 @@ std::string ProjectFile::getXml(const std::string& vOffset)
 
 	std::string offset = vOffset + "\t";
 
-	str += offset + "<shader>" + m_ProjectFilePathName + "</shader>\n";
 	str += offset + "<stage>" + ct::toStr(m_ShaderStage) + "</stage>\n";
 	str += offset + "<api_target>" + ct::toStr(m_ApiTarget) + "</api_target>\n";
 	str += offset + "<language_target>" + ct::toStr(m_LanguageTarget) + "</language_target>\n";
@@ -245,13 +254,12 @@ void ProjectFile::setFromXml(tinyxml2::XMLElement* vElem, tinyxml2::XMLElement* 
 
 	if (strParentName == "project")
 	{
-		if (strName == "shader") m_ProjectFilePathName = strValue;
-		if (strName == "stage") m_ShaderStage = (GlslConvert::ShaderStage)ct::ivariant(strValue).getI();
-		if (strName == "api_target") m_ApiTarget = (GlslConvert::ApiTarget)ct::ivariant(strValue).getI();
-		if (strName == "language_target") m_LanguageTarget = (GlslConvert::LanguageTarget)ct::ivariant(strValue).getI();
-		
-		setOptimizationStruct_From_Xml(vElem, vParent);
+		if (strName == "stage") m_ShaderStage = (GlslConvert::ShaderStage)ct::ivariant(strValue).getU();
+		if (strName == "api_target") m_ApiTarget = (GlslConvert::ApiTarget)ct::ivariant(strValue).getU();
+		if (strName == "language_target") m_LanguageTarget = (GlslConvert::LanguageTarget)ct::ivariant(strValue).getU();
 	}
+
+	setOptimizationStruct_From_Xml(vElem, vParent);
 }
 
 std::string ProjectFile::getXml_From_OptimizationStruct(const std::string& vOffset)
@@ -265,6 +273,7 @@ std::string ProjectFile::getXml_From_OptimizationStruct(const std::string& vOffs
 	str += offset + "<compiler_flags>" + ct::toStr(m_OptimizationStruct.compilerFlags) + "</compiler_flags>\n";
 	str += offset + "<control_flags>" + ct::toStr(m_OptimizationStruct.controlFlags) + "</control_flags>\n";
 	str += offset + "<optimization_flags>" + ct::toStr(m_OptimizationStruct.optimizationFlags) + "</optimization_flags>\n";
+	str += offset + "<optimization_flags_bis>" + ct::toStr(m_OptimizationStruct.optimizationFlags_Bis) + "</optimization_flags_bis>\n";
 	str += offset + "<instructiontolower_flags>" + ct::toStr(m_OptimizationStruct.instructionToLowerFlags) + "</instructiontolower_flags>\n";
 
 	str += offset + "<algebraic_native_integers>" + ct::toStr(m_OptimizationStruct.algebraicOptions.native_integers) + "</algebraic_native_integers>\n";
@@ -312,7 +321,7 @@ void ProjectFile::setOptimizationStruct_From_Xml(tinyxml2::XMLElement* vElem, ti
 	if (vParent != nullptr)
 		strParentName = vParent->Value();
 
-	if (strName == "optimization")
+	if (strName == "optimization" && strParentName == "project")
 	{
 		for (tinyxml2::XMLElement* child = vElem->FirstChildElement(); child != nullptr; child = child->NextSiblingElement())
 		{
@@ -325,6 +334,7 @@ void ProjectFile::setOptimizationStruct_From_Xml(tinyxml2::XMLElement* vElem, ti
 		if (strName == "compiler_flags") m_OptimizationStruct.compilerFlags = (GlslConvert::CompilerFlags)ct::ivariant(strValue).getI();
 		if (strName == "control_flags") m_OptimizationStruct.controlFlags = (GlslConvert::ControlFlags)ct::ivariant(strValue).getI();
 		if (strName == "optimization_flags") m_OptimizationStruct.optimizationFlags = (GlslConvert::OptimizationFlags)ct::ivariant(strValue).getI();
+		if (strName == "optimization_flags_bis") m_OptimizationStruct.optimizationFlags_Bis = (GlslConvert::OptimizationFlags_Bis)ct::ivariant(strValue).getI();
 		if (strName == "instructiontolower_flags") m_OptimizationStruct.instructionToLowerFlags = (GlslConvert::InstructionToLowerFlags)ct::ivariant(strValue).getI();
 
 		if (strName == "algebraic_native_integers") m_OptimizationStruct.algebraicOptions.native_integers = ct::ivariant(strValue).getB();

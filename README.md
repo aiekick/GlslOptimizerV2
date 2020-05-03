@@ -21,7 +21,38 @@ I am very interested in graphic programming but as a self-learning guy, im in no
 
 So if you feel like it, help me improve this Software that I make available in open source for that.
 
-## The module : 
+## Get started :
+
+1) Open the App :)
+2) Open a shader file( you have many samples in dir shader_samples) or create new (in the main menu bar)
+3) Set the type of shader, The version of glsl you want, and Tune the parameters.
+4) Optimize
+
+![Get started](doc/GetStarted.gif)
+ 
+ To note : 
+ All the settings are saved in a conf file in the same directory of your shader file
+ the conf file name the name and ext of your shader file with an extention conf :
+ If you have a shader like : shader.frag => the conf file will be shader_frag.conf
+ 
+ So for the next time, you just need to open your sahder file again, (dont opn conf file) and your settings will comming back :)
+ 
+## The module GlslOptimizerV2 : 
+
+The module GlslOptimizerV2 is inside the directory GlslOptimizerV2
+There is a CMakeLists.txt file for link into your porject easily
 
 ## The Standalone App :
+
+Some screenshots of the current app :
+
+Open You file :
+![Open a  File](doc/OpenFile.png)
+
+Write/open your code and optimzie it : (see in the pane, all the params i exepose)
+![Write your code](doc/WriteYourCode.png)
+![Optimize a shader](doc/OptimizeShader.png)
+
+Customize the style ( the default theme is light but you can also customize app theme avec editor palette)
+![Customize app Style](doc/CustomizeStyle.png)
 
