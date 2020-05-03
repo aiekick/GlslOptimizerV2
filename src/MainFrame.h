@@ -39,7 +39,6 @@ private:
 	ProjectFile m_ProjectFile;	
 
 	bool m_ShowImGui = false;
-	bool m_ShowImGuiStyle = false;
 	bool m_ShowAboutDialog = false;
 
 public:

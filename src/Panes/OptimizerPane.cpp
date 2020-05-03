@@ -77,14 +77,18 @@ int OptimizerPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 			{
 				ImGui::Header("Shader Stage");
 
-				static int _shaderStage = (int)GlslConvert::ShaderStage::MESA_SHADER_VERTEX;
-				_shaderStage = (int)vProjectFile->m_ShaderStage;
-				if (ImGui::Combo("##shaderstage", &_shaderStage, "Vertex\0Tesselation Control\0Tesselation Evaluation\0Geometry\0Fragment\0\0"))
+				ImGui::Indent();
 				{
-					vProjectFile->m_ShaderStage = (GlslConvert::ShaderStage)_shaderStage;
-					change = true;
+					static int _shaderStage = (int)GlslConvert::ShaderStage::MESA_SHADER_VERTEX;
+					_shaderStage = (int)vProjectFile->m_ShaderStage;
+					if (ImGui::Combo("##shaderstage", &_shaderStage, "Vertex\0Tesselation Control\0Tesselation Evaluation\0Geometry\0Fragment\0\0"))
+					{
+						vProjectFile->m_ShaderStage = (GlslConvert::ShaderStage)_shaderStage;
+						change = true;
+					}
 				}
-				
+				ImGui::Unindent();
+
 				ImGui::Header("Opengl Version");
 
 				ImGui::Indent();
@@ -124,6 +128,7 @@ int OptimizerPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 				ImGui::Unindent();
 
 				ImGui::Header("Language Target");
+
 				ImGui::Indent();
 				{
 					static int _conversionTarget = (int)vProjectFile->m_LanguageTarget;
@@ -136,6 +141,7 @@ int OptimizerPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 				ImGui::Unindent();
 
 				ImGui::Header("Generate");
+
 				ImGui::Indent();
 				{
 					if (ImGui::Button("Optimize)"))

@@ -210,7 +210,6 @@ namespace ImGui
 		const bool *vValidation = 0, const char* vValidationHelp = 0,
 		ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = nullptr, void* user_data = nullptr);
 	IMGUI_API void HelpMarker(const char* desc);
-	IMGUI_API void ShowCustomStyleEditor(bool *vOpen, ImGuiStyle* ref = nullptr);
 	IMGUI_API bool CheckBoxDefault(const char *vName, bool *vVar, bool vDefault, const char *vHelp);
 	IMGUI_API bool SliderIntDefault(float vWidth, const char *vName, int *vVar, int vInf, int vSup, int vDefault);
 	IMGUI_API void Header(const char *vName, float width = -1);

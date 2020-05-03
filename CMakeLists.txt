@@ -4,14 +4,14 @@ cmake_policy(SET CMP0054 NEW)
 cmake_policy(SET CMP0012 NEW)
 cmake_policy(SET CMP0023 NEW)
 
-set(PROJECT GlslOptimizerApp)
+set(PROJECT GlslOptimizerV2App)
 
 enable_language(C CXX)
 
 project(${PROJECT} CXX)
 
 include(cmake/3rdparty.cmake)
-include(cmake/glslOpt.cmake)
+include(cmake/GlslOptimizerV2.cmake)
 
 ## some defines for debug mode
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
@@ -100,10 +100,10 @@ add_executable(${PROJECT}
 if (APPLE)
 	set_target_properties(${PROJECT}
 			PROPERTIES
-			OUTPUT_NAME "GlslOptimizer_Osx"
-			MACOSX_BUNDLE_EXECUTABLE_NAME "GlslOptimizer_Osx"
-			MACOSX_BUNDLE_BUNDLE_NAME "GlslOptimizer_Osx"
-			FOLDER "GlslOptimizer_Osx"
+			OUTPUT_NAME "GlslOptimizerV2_Osx"
+			MACOSX_BUNDLE_EXECUTABLE_NAME "GlslOptimizerV2_Osx"
+			MACOSX_BUNDLE_BUNDLE_NAME "GlslOptimizerV2_Osx"
+			FOLDER "GlslOptimizerV2_Osx"
 			##RESOURCE icon.icns
 			MACOSX_BUNDLE_SHORT_VERSION_STRING "0.5"
 			MACOSX_BUNDLE_LONG_VERSION_STRING "Beta 0.5"
@@ -111,14 +111,14 @@ if (APPLE)
 			MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/MacOSXBundleInfo.plist.in")
 elseif(WIN32)
 	if (MINGW)
-		set_target_properties(${PROJECT} PROPERTIES	OUTPUT_NAME "GlslOptimizer_Mingw32_Win32")
+		set_target_properties(${PROJECT} PROPERTIES	OUTPUT_NAME "GlslOptimizerV2_Mingw32_Win32")
 	elseif (CYGWIN)
-		set_target_properties(${PROJECT} PROPERTIES	OUTPUT_NAME "GlslOptimizer_Cygwin_Win32")
+		set_target_properties(${PROJECT} PROPERTIES	OUTPUT_NAME "GlslOptimizerV2_Cygwin_Win32")
 	elseif(MSVC)
-		set_target_properties(${PROJECT} PROPERTIES	OUTPUT_NAME "GlslOptimizer_Msvc_Win32")
+		set_target_properties(${PROJECT} PROPERTIES	OUTPUT_NAME "GlslOptimizerV2_Msvc_Win32")
 	endif()
 elseif(UNIX)
-	set_target_properties(${PROJECT} PROPERTIES	OUTPUT_NAME "GlslOptimizer_Linux")
+	set_target_properties(${PROJECT} PROPERTIES	OUTPUT_NAME "GlslOptimizerV2_Linux")
 endif()
 
 set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}")

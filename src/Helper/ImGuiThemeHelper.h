@@ -20,6 +20,7 @@
 #include <imgui.h>
 #include <string>
 #include <map>
+#include "ImGuiColorTextEdit/TextEditor.h"
 
 class ImGuiThemeHelper : public conf::ConfigAbstract
 {
@@ -29,10 +30,15 @@ public:
 
 private:
 	std::map<std::string, igfd::FilterInfosStruct> m_FileTypeInfos;
+	bool m_ShowImGuiStyle = false;
+	bool m_ShowImGuiEditorStyle = false;
 
 public:
+	void Draw();
 	void DrawMenu();
-
+	void DrawImGuiStyleEditor(bool *vOpen);
+	void DrawImGuiColorTextEditStyleEditor(bool *vOpen);
+	
 public:
 	std::string getXml(const std::string& vOffset) override;
 	void setFromXml(tinyxml2::XMLElement* vElem, tinyxml2::XMLElement* vParent) override;
@@ -41,14 +47,17 @@ public:
 	void ApplyStyleColorsClassic(ImGuiStyle* dst = nullptr);
 	void ApplyStyleColorsDark(ImGuiStyle* dst = nullptr);
 	void ApplyStyleColorsLight(ImGuiStyle* dst = nullptr);
-	void ApplyStyleColorsDarcula(ImGuiStyle* dst = nullptr);
-
-private:
+	void ApplyPalette(TextEditor::Palette vPalette);
+	TextEditor::Palette GetPalette();
 	void ApplyFileTypeColors();
-
+	
 private:
-	static std::string GetStyleColorName(ImGuiCol idx);
-	static int GetImGuiColFromName(const std::string& vName);
+	// ImGui Styles
+	static const char* Get_ImGui_NameFromCol(ImGuiCol idx);
+	static int Get_ImGui_ColFromName(const std::string& vName);
+	// ImGuiColorTextEdit Palette
+	static const char* Get_ImGuiColorTextEditPalette_NameFromCol(TextEditor::PaletteIndex idx);
+	static TextEditor::PaletteIndex Get_ImGuiColorTextEditPalette_ColFromName(const std::string& vName);
 
 public: // singleton
 	static ImGuiThemeHelper *Instance()

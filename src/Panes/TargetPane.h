@@ -34,7 +34,8 @@ public:
 	int DrawPane(ProjectFile *vProjectFile, int vWidgetId);
 	std::string GetCode();
 	void SetCode(std::string vCode);
-	
+	TextEditor* GetEditor() { return &m_CodeEditor; }
+
 public: // singleton
 	static TargetPane *Instance()
 	{

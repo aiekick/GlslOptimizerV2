@@ -163,7 +163,7 @@ else ()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra") ## -std=gnu++0x
 endif ()
 
-add_library(GlslOptimizer STATIC 
+add_library(GlslOptimizerV2 STATIC 
 	${PROJECT_SRC}
 	${PROJECT_SRC_COMPILER}
 	${PROJECT_SRC_GETOPT}
@@ -188,7 +188,7 @@ add_library(GlslOptimizer STATIC
 	${PROJECT_INCLUDE_GL}
 	${PROJECT_INCLUDE_C11}
 )
-set_target_properties(GlslOptimizer PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(GlslOptimizerV2 PROPERTIES LINKER_LANGUAGE CXX)
 
 include_directories(
 		src
@@ -223,5 +223,5 @@ set(GLSLOPTIMIZER_INCLUDE_DIR
 	${CMAKE_CURRENT_SOURCE_DIR}/src/util
 	PARENT_SCOPE)
 
-set(GLSLOPTIMIZER_LIBRARIES GlslOptimizer PARENT_SCOPE)
+set(GLSLOPTIMIZER_LIBRARIES GlslOptimizerV2 PARENT_SCOPE)
 set(GLSLOPTIMIZER_LIB_DIR ${CMAKE_CURRENT_BINARY_DIR} PARENT_SCOPE)

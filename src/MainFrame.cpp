@@ -59,11 +59,10 @@ void MainFrame::Init()
 	snprintf(buf, 255, "GlslOptimizer %s", GLSLOPTIMIZER_VERSION);
 	glfwSetWindowTitle(m_Window, buf);
 
-	ImGuiThemeHelper::Instance()->ApplyStyleColorsLight();
-	
-	LoadConfigFile("config.xml");
-
+	ImGuiThemeHelper::Instance(); // default
 	GuiLayout::Instance()->Init();
+
+	LoadConfigFile("config.xml");
 }
 
 void MainFrame::Unit()
@@ -124,6 +123,7 @@ void MainFrame::Display(ImVec2 vSize)
 	widgetId = GuiLayout::Instance()->DisplayPanes(&m_ProjectFile, widgetId);
 	
 	DisplayDialogsAndPopups();
+	ImGuiThemeHelper::Instance()->Draw();
 
 	GuiLayout::Instance()->InitAfterFirstDisplay(vSize);
 
@@ -234,8 +234,7 @@ void MainFrame::DrawDockPane(ImVec2 vSize)
 				ImGui::Separator();
 
 				ImGui::MenuItem("Show ImGui", "", &m_ShowImGui);
-				ImGui::MenuItem("Show ImGui Style", "", &m_ShowImGuiStyle);
-
+				
 				ImGui::EndMenu();
 			}
 
@@ -301,8 +300,6 @@ void MainFrame::DisplayDialogsAndPopups()
 		ShowAboutDialog(&m_ShowAboutDialog);
 	if (m_ShowImGui)
 		ImGui::ShowDemoWindow(&m_ShowImGui);
-	if (m_ShowImGuiStyle)
-		ImGui::ShowCustomStyleEditor(&m_ShowImGuiStyle);
 }
 
 void MainFrame::ShowAboutDialog(bool *vOpen)
