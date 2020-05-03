@@ -30,7 +30,7 @@ So if you feel like it, help me improve this Software that I make available in o
 
 ![Get started](doc/GetStarted.gif)
  
- To note : 
+ ### To note : 
  
  All the settings are saved in a conf file in the same directory of your shader file
  the conf file name the name and ext of your shader file with an extention conf :
