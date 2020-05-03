@@ -41,6 +41,7 @@ So if you feel like it, help me improve this Software that I make available in o
 ## The module GlslOptimizerV2 : 
 
 The module GlslOptimizerV2 is inside the directory GlslOptimizerV2
+
 There is a CMakeLists.txt file for link into your porject easily
 
 ## The Standalone App :
