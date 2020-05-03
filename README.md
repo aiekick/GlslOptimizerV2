@@ -1,6 +1,6 @@
-# GlslOptimizer
+# GlslOptimizerV2
 
-GlslOptimizer is an optimizer for glsl language with support of last opengl api and Stages 
+GlslOptimizerV2 is an optimizer for the glsl language with support of last opengl api and Stages 
 Vertex \ Tesselation Control \ Tesselation Evaluation \ Geometry \ Fragment
 
 Based on [Mesa3D](https://www.mesa3d.org/) and [glsl-optimizer](https://github.com/aras-p/glsl-optimizer)
