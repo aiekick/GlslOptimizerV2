@@ -1,5 +1,20 @@
-#ifndef __GLSL_CONVERTER__H__
-#define __GLSL_CONVERTER__H__
+/*
+ * Copyright 2020 Stephane Cuillerdier (aka Aiekick)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#pragma once;
 
 #include "compiler/shader_enums.h"
 #include <string>
@@ -143,6 +158,7 @@ public:
 		// dont save
 		int maxCountPasses = 1000;
 		ShaderStage stage = ShaderStage::MESA_SHADER_FRAGMENT;
+
 		// the rest is to save
 		CompilerFlags compilerFlags = (GlslConvert::CompilerFlags)0;
 		ControlFlags controlFlags = (GlslConvert::ControlFlags)0;
@@ -248,4 +264,3 @@ public:
 private:
 	void FillCompilerOptions(gl_shader_compiler_options *vCompileOptions, OptimizationStruct *vOptimizationStruct);
 };
-#endif // __GLSL_CONVERTER__H__

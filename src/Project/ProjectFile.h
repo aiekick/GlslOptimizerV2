@@ -17,7 +17,10 @@
 
 #include <ConfigAbstract.h>
 #include "tinyxml2/tinyxml2.h"
+#include "ctools/GLVersionChecker.h"
+#include "src/code/GlslConvert.h"
 #include <imgui.h>
+
 #include <string>
 
 class ProjectFile : public conf::ConfigAbstract
@@ -25,6 +28,10 @@ class ProjectFile : public conf::ConfigAbstract
 public: // to save
 	std::string m_ProjectFilePathName;
 	std::string m_ProjectFilePath;
+	GlslConvert::ShaderStage m_ShaderStage = GlslConvert::ShaderStage::MESA_SHADER_FRAGMENT;
+	GlslConvert::ApiTarget m_ApiTarget = GlslConvert::ApiTarget::API_OPENGL_CORE;
+	GlslConvert::LanguageTarget m_LanguageTarget = GlslConvert::LanguageTarget::LANGUAGE_TARGET_GLSL;
+	GlslConvert::OptimizationStruct m_OptimizationStruct;
 	
 public: // dont save
 	
@@ -56,5 +63,10 @@ public:
 public:
 	std::string getXml(const std::string& vOffset) override;
 	void setFromXml(tinyxml2::XMLElement* vElem, tinyxml2::XMLElement* vParent) override;
+
+private:
+	std::string getXml_From_OptimizationStruct(const std::string& vOffset);
+	void setOptimizationStruct_From_Xml(tinyxml2::XMLElement* vElem, tinyxml2::XMLElement* vParent);
+
 };
 

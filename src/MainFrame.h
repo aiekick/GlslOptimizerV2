@@ -46,8 +46,8 @@ public:
 	void Init();
 	void Unit();
 
-	void NewProject(const std::string& vFilePathName);
-	void LoadProject(const std::string& vFilePathName);
+	void NewProject(const std::string& vFilePathName = "");
+	void OpenProject(const std::string& vFilePathName);
 	void SaveProject();
 	void SaveAsProject(const std::string& vFilePathName);
 	ProjectFile* GetProject();

@@ -19,6 +19,8 @@
 
 #define GLSLOPTIMIZER_VERSION "Beta 0.1"
 
+#define DLG_FILTERS ".*\0.glsl\0.vert\0.ctrl\0.eval\0.geom\0.frag\0\0"
+
 #include "MainFrame.h"
 
 #include <cTools.h>
@@ -61,11 +63,6 @@ void MainFrame::Init()
 	
 	LoadConfigFile("config.xml");
 
-#ifdef _DEBUG
-	//std::string projectPath = PROJECT_PATH;
-	//LoadProject(projectPath + "\\projects\\GlslOptimizer.glo"); // directly open this project file
-#endif
-
 	GuiLayout::Instance()->Init();
 }
 
@@ -80,7 +77,7 @@ void MainFrame::NewProject(const std::string& vFilePathName)
 	SetAppTitle(vFilePathName);
 }
 
-void MainFrame::LoadProject(const std::string& vFilePathName)
+void MainFrame::OpenProject(const std::string& vFilePathName)
 {
 	if (m_ProjectFile.LoadAs(vFilePathName))
 	{
@@ -160,79 +157,68 @@ void MainFrame::DrawDockPane(ImVec2 vSize)
 
 	if (ImGui::BeginMenuBar())
 	{
-		if (ImGui::BeginMenu(ICON_IGFS_PROJECT " Project"))
+		if (ImGui::MenuItem(ICON_IGFS_FILE " New"))
 		{
-			if (ImGui::MenuItem(ICON_IGFS_FILE " New"))
+			NewProject();
+		}
+
+		if (ImGui::MenuItem(ICON_IGFS_FOLDER_OPEN " Open"))
+		{
+			// if change maybe save before open other
+			if (m_ProjectFile.IsLoaded() && m_ProjectFile.IsThereAnyNotSavedChanged())
 			{
-				m_ProjectFile.New();
+				m_SaveDialogIfRequired = true;
+				m_SaveChangeDialogActions.push_front([this]()
+				{
+					igfd::ImGuiFileDialog::Instance()->OpenModal("ProjectDlg", "Open Project File", DLG_FILTERS, ".", 1, "open");
+					m_SaveDialogIfRequired = false;
+				});
+			}
+			else
+			{
+				igfd::ImGuiFileDialog::Instance()->OpenModal("ProjectDlg", "Open Project File", DLG_FILTERS, ".", 1, "open");
+			}
+		}
+
+		if (m_ProjectFile.IsLoaded())
+		{
+			if (ImGui::MenuItem(ICON_IGFS_SAVE " Save"))
+			{
+				if (!m_ProjectFile.Save())
+				{
+					igfd::ImGuiFileDialog::Instance()->OpenModal("ProjectDlg", "Save Project File", DLG_FILTERS, ".", 1, "save");
+				}
 			}
 
-			if (ImGui::MenuItem(ICON_IGFS_FOLDER_OPEN " Open"))
+			if (ImGui::MenuItem(ICON_IGFS_SAVE " Save As"))
 			{
-				// if change maybe save before open other
-				if (m_ProjectFile.IsLoaded() && m_ProjectFile.IsThereAnyNotSavedChanged())
+				igfd::ImGuiFileDialog::Instance()->OpenModal("ProjectDlg", "Save Project File", DLG_FILTERS, ".", 1, "save");
+			}
+
+			if (ImGui::MenuItem(ICON_IGFS_DESTROY " Close"))
+			{
+				// if change maybe save before close
+				if (m_ProjectFile.IsThereAnyNotSavedChanged())
 				{
 					m_SaveDialogIfRequired = true;
 					m_SaveChangeDialogActions.push_front([this]()
 					{
-						igfd::ImGuiFileDialog::Instance()->OpenModal("OpenProjectDlg", "Open Project File", ".glo\0\0", ".");
+						m_ProjectFile.Clear();
 						m_SaveDialogIfRequired = false;
 					});
 				}
 				else
 				{
-					igfd::ImGuiFileDialog::Instance()->OpenModal("OpenProjectDlg", "Open Project File", ".glo\0\0", ".");
+					m_ProjectFile.Clear();
 				}
 			}
-
-			if (m_ProjectFile.IsLoaded())
-			{
-				ImGui::Separator();
-
-				if (ImGui::MenuItem(ICON_IGFS_SAVE " Save"))
-				{
-					if (!m_ProjectFile.Save())
-					{
-						igfd::ImGuiFileDialog::Instance()->OpenModal("SaveProjectDlg", "Save Project File", ".glo\0\0", ".");
-					}
-				}
-
-				if (ImGui::MenuItem(ICON_IGFS_SAVE " Save As"))
-				{
-					igfd::ImGuiFileDialog::Instance()->OpenModal("SaveProjectDlg", "Save Project File", ".glo\0\0", ".");
-				}
-
-				ImGui::Separator();
-
-				if (ImGui::MenuItem(ICON_IGFS_DESTROY " Close"))
-				{
-					// if change maybe save before close
-					if (m_ProjectFile.IsThereAnyNotSavedChanged())
-					{
-						m_SaveDialogIfRequired = true;
-						m_SaveChangeDialogActions.push_front([this]()
-						{
-							m_ProjectFile.Clear();
-							m_SaveDialogIfRequired = false;
-						});
-					}
-					else
-					{
-						m_ProjectFile.Clear();
-					}
-				}
-			}
-
-			ImGui::Separator();
-
-			if (ImGui::MenuItem(ICON_IGFS_ABOUT " About"))
-			{
-				m_ShowAboutDialog = true;
-			}
-			
-			ImGui::EndMenu();
 		}
-		
+
+		if (ImGui::MenuItem(ICON_IGFS_ABOUT " About"))
+		{
+			m_ShowAboutDialog = true;
+		}
+
 		ImGui::Spacing();
 
 		GuiLayout::Instance()->DisplayMenu(vSize);
@@ -241,11 +227,6 @@ void MainFrame::DrawDockPane(ImVec2 vSize)
 		
 		if (ImGui::BeginMenu(ICON_IGFS_SETTINGS " Settings"))
 		{
-			/*if (ImGui::MenuItem("Settings"))
-			{
-				SettingsDlg::Instance()->OpenDialog();
-			}*/
-
 			if (ImGui::BeginMenu(ICON_IGFS_EDIT " Styles"))
 			{
 				ImGuiThemeHelper::Instance()->DrawMenu();
@@ -269,7 +250,7 @@ void MainFrame::DrawDockPane(ImVec2 vSize)
 			{
 				if (!m_ProjectFile.Save())
 				{
-					igfd::ImGuiFileDialog::Instance()->OpenModal("SaveProjectDlg", "Save Project File", ".glo\0\0", ".", 0);
+					igfd::ImGuiFileDialog::Instance()->OpenModal("ProjectDlg", "Save Project File", DLG_FILTERS, ".", 1, "save");
 				}
 			}
 		}
@@ -288,44 +269,32 @@ void MainFrame::DisplayDialogsAndPopups()
 		ShowSaveDialogIfRequired();
 	
 	ImVec2 min = MainFrame::Instance()->m_DisplaySize * 0.5f;
-	ImVec2 max = MainFrame::Instance()->m_DisplaySize;
+	ImVec2 max = MainFrame::Instance()->m_DisplaySize * 0.9f;
 
-	if (m_ProjectFile.IsLoaded())
-	{
-		OptimizerPane::Instance()->DrawDialogAndPopups(&m_ProjectFile, min, max);
-	}
-
-	if (igfd::ImGuiFileDialog::Instance()->FileDialog("NewProjectDlg",
+	if (igfd::ImGuiFileDialog::Instance()->FileDialog("ProjectDlg",
 		ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking, min, max))
 	{
 		if (igfd::ImGuiFileDialog::Instance()->IsOk)
 		{
-			NewProject(igfd::ImGuiFileDialog::Instance()->GetFilepathName());
+			auto datas = igfd::ImGuiFileDialog::Instance()->GetUserDatas();
+			if (datas)
+			{
+				auto sel = igfd::ImGuiFileDialog::Instance()->GetSelection();
+				if (sel.size() == 1)
+				{
+					std::string fileName = (*sel.begin()).first;
+					std::string filePathName = (*sel.begin()).second;
+
+					std::string mode = (const char*)datas;
+					if (mode == "open")
+						OpenProject(filePathName);
+					else if (mode == "save")
+						SaveAsProject(filePathName);
+				}
+			}
 		}
 
-		igfd::ImGuiFileDialog::Instance()->CloseDialog("NewProjectDlg");
-	}
-
-	if (igfd::ImGuiFileDialog::Instance()->FileDialog("OpenProjectDlg",
-		ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking, min, max))
-	{
-		if (igfd::ImGuiFileDialog::Instance()->IsOk)
-		{
-			LoadProject(igfd::ImGuiFileDialog::Instance()->GetFilepathName());
-		}
-
-		igfd::ImGuiFileDialog::Instance()->CloseDialog("OpenProjectDlg");
-	}
-
-	if (igfd::ImGuiFileDialog::Instance()->FileDialog("SaveProjectDlg",
-		ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking, min, max))
-	{
-		if (igfd::ImGuiFileDialog::Instance()->IsOk)
-		{
-			SaveAsProject(igfd::ImGuiFileDialog::Instance()->GetFilepathName());
-		}
-
-		igfd::ImGuiFileDialog::Instance()->CloseDialog("SaveProjectDlg");
+		igfd::ImGuiFileDialog::Instance()->CloseDialog("ProjectDlg");
 	}
 
 	if (m_ShowAboutDialog)
@@ -334,8 +303,6 @@ void MainFrame::DisplayDialogsAndPopups()
 		ImGui::ShowDemoWindow(&m_ShowImGui);
 	if (m_ShowImGuiStyle)
 		ImGui::ShowCustomStyleEditor(&m_ShowImGuiStyle);
-
-	//SettingsDlg::Instance()->DrawDialog();
 }
 
 void MainFrame::ShowAboutDialog(bool *vOpen)
@@ -405,8 +372,6 @@ limitations under the License.)", "https://github.com/aiekick/GlslOptimizer/blob
 		ImGui::ClickableTextUrl("Glad (MIT)", "https://github.com/Dav1dde/glad");
 		//stb
 		ImGui::ClickableTextUrl("Stb (MIT)", "https://github.com/nothings/stb");
-		ImGui::SameLine(); ImGui::Text("by"); ImGui::SameLine();
-		ImGui::ClickableTextUrl("Sean Barrett @Nothings", "https://twitter.com/nothings");
 		//tinyxml2
 		ImGui::ClickableTextUrl("tinyxml2 (ZLIB)", "https://github.com/leethomason/tinyxml2");
 		//ImGuiColorTextEdit
@@ -429,7 +394,7 @@ void MainFrame::SetAppTitle(const std::string& vFilePathName)
 	if (ps.isOk)
 	{
 		char bufTitle[1024];
-		snprintf(bufTitle, 1023, "GlslOptimizer %s - Project : %s.glo", GLSLOPTIMIZER_VERSION, ps.name.c_str());
+		snprintf(bufTitle, 1023, "GlslOptimizer %s - Shader : %s.%s", GLSLOPTIMIZER_VERSION, ps.name.c_str(), ps.ext.c_str());
 		glfwSetWindowTitle(m_Window, bufTitle);
 	}
 }
@@ -468,7 +433,7 @@ void MainFrame::ShowSaveDialogIfRequired()
 					choiceMade = true;
 					m_SaveChangeDialogActions.push_front([this]()
 					{
-						igfd::ImGuiFileDialog::Instance()->OpenModal("SaveProjectDlg", "Save Project File", ".glo\0\0", ".");
+						igfd::ImGuiFileDialog::Instance()->OpenModal("ProjectDlg", "Save Project File", DLG_FILTERS, ".", 1, "save");
 						m_SaveDialogIfRequired = false;
 					});
 				}

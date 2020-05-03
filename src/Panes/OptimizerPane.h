@@ -38,23 +38,18 @@ private:
 
 private:
 	OpenGlVersionStruct m_Current_OpenGlVersionStruct;
-	GlslConvert::ApiTarget m_ApiTarget = GlslConvert::ApiTarget::API_OPENGL_CORE;
-	GlslConvert::LanguageTarget m_LanguageTarget = GlslConvert::LanguageTarget::LANGUAGE_TARGET_GLSL;
-	GlslConvert::OptimizationStruct m_OptimizationStruct;
-	GlslConvert::ShaderStage m_ShaderType = GlslConvert::ShaderStage::MESA_SHADER_FRAGMENT;
 
 public:
 	void Init();
 	int DrawPane(ProjectFile *vProjectFile, int vWidgetId);
-	void DrawDialogAndPopups(ProjectFile *vProjectFile, ImVec2 vMin, ImVec2 vMax);
+	void ChangeGLSLVersionInCode(const std::string& vNewVersionCode = "");
 
 private:
-	void LoadShaderFile(const std::string& vFilePathName);
-	void Generate();
-	void DrawOptimizationFlags(ImVec2 vSize);
-	void DrawCompilerFlags(ImVec2 vSize);
-	void DrawInstructionToLowerFlags(ImVec2 vSize);
-
+	void Generate(ProjectFile *vProjectFile);
+	bool DrawOptimizationFlags(ProjectFile *vProjectFile, ImVec2 vSize);
+	bool DrawCompilerFlags(ProjectFile *vProjectFile, ImVec2 vSize);
+	bool DrawInstructionToLowerFlags(ProjectFile *vProjectFile, ImVec2 vSize);
+	
 public: // singleton
 	static OptimizerPane *Instance()
 	{

@@ -26,6 +26,7 @@
 
 #include "Panes/SourcePane.h"
 #include "Panes/TargetPane.h"
+#include "Project/ProjectFile.h"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui_internal.h"
@@ -59,6 +60,8 @@ int OptimizerPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 
 	ImGui::SetPUSHID(OptimizerPane_WidgetId);
 
+	bool change = false;
+
 	if (GuiLayout::m_Pane_Shown & PaneFlags::PANE_OPTIMIZER)
 	{
 		if (ImGui::Begin<PaneFlags>(OPTIMIZER_PANE,
@@ -72,20 +75,14 @@ int OptimizerPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 		{
 			if (vProjectFile &&  vProjectFile->IsLoaded())
 			{
-				ImGui::Header("Shader File");
-
-				if (ImGui::Button("Open Shader"))
-				{
-					igfd::ImGuiFileDialog::Instance()->OpenModal("ShaderFileDlg", "Open Shader File", ".glsl\0.vert\0.ctrl\0.eval\0.geom\0.frag\0\0", ".");
-				}
-
 				ImGui::Header("Shader Stage");
 
 				static int _shaderStage = (int)GlslConvert::ShaderStage::MESA_SHADER_VERTEX;
-				_shaderStage = (int)m_ShaderType;
+				_shaderStage = (int)vProjectFile->m_ShaderStage;
 				if (ImGui::Combo("##shaderstage", &_shaderStage, "Vertex\0Tesselation Control\0Tesselation Evaluation\0Geometry\0Fragment\0\0"))
 				{
-					m_ShaderType = (GlslConvert::ShaderStage)_shaderStage;
+					vProjectFile->m_ShaderStage = (GlslConvert::ShaderStage)_shaderStage;
+					change = true;
 				}
 				
 				ImGui::Header("Opengl Version");
@@ -104,19 +101,23 @@ int OptimizerPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 									it->second.OpenglVersion == m_Current_OpenGlVersionStruct.OpenglVersion))
 								{
 									m_Current_OpenGlVersionStruct = it->second;
+									ChangeGLSLVersionInCode(m_Current_OpenGlVersionStruct.DefineCode);
+									vProjectFile->SetProjectChange();
 								}
 							}
 						}
+						change = true;
 						ImGui::EndCombo();
 					}
 
 					if (m_Current_OpenGlVersionStruct.DefaultGlslVersionInt != 100 &&
 						m_Current_OpenGlVersionStruct.DefaultGlslVersionInt != 300)
 					{
-						static int _targetType = (int)m_ApiTarget;
+						static int _targetType = (int)vProjectFile->m_ApiTarget;
 						if (ImGui::Combo("##ApiTarget", &_targetType, "Compat\0Core\0\0"))
 						{
-							m_ApiTarget = (GlslConvert::ApiTarget)_targetType;
+							vProjectFile->m_ApiTarget = (GlslConvert::ApiTarget)_targetType;
+							change = true;
 						}
 					}
 				}
@@ -125,10 +126,11 @@ int OptimizerPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 				ImGui::Header("Language Target");
 				ImGui::Indent();
 				{
-					static int _conversionTarget = (int)m_LanguageTarget;
+					static int _conversionTarget = (int)vProjectFile->m_LanguageTarget;
 					if (ImGui::Combo("##LanguageTarget", &_conversionTarget, "MESA AST\0MESA IR\0GLSL\0\0"))
 					{
-						m_LanguageTarget = (GlslConvert::LanguageTarget)_conversionTarget;
+						vProjectFile->m_LanguageTarget = (GlslConvert::LanguageTarget)_conversionTarget;
+						change = true;
 					}
 				}
 				ImGui::Unindent();
@@ -138,7 +140,7 @@ int OptimizerPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 				{
 					if (ImGui::Button("Optimize)"))
 					{
-						Generate();
+						Generate(vProjectFile);
 					}
 
 					ImGui::Separator();
@@ -146,20 +148,20 @@ int OptimizerPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 					ImGui::Text("Control :");
 					ImGui::Indent();
 					{
-						ImGui::CheckBoxBitWize<GlslConvert::ControlFlags>("Partial Shader", "Not Linked !\nso some optimizations will not been made",
-							&m_OptimizationStruct.controlFlags, GlslConvert::ControlFlags::CONTROL_DO_PARTIAL_SHADER, false);
-						if (!(m_OptimizationStruct.controlFlags & GlslConvert::ControlFlags::CONTROL_DO_PARTIAL_SHADER))
+						change |= ImGui::CheckBoxBitWize<GlslConvert::ControlFlags>("Partial Shader", "Not Linked !\nso some optimizations will not been made",
+							&vProjectFile->m_OptimizationStruct.controlFlags, GlslConvert::ControlFlags::CONTROL_DO_PARTIAL_SHADER, false);
+						if (!(vProjectFile->m_OptimizationStruct.controlFlags & GlslConvert::ControlFlags::CONTROL_DO_PARTIAL_SHADER))
 						{
 							ImGui::Separator();
-							ImGui::CheckBoxBitWize<GlslConvert::ControlFlags>("Skip Preprocessor", "preprocessor directives and comments will be removed before link",
-								&m_OptimizationStruct.controlFlags, GlslConvert::ControlFlags::CONTROL_SKIP_PREPROCESSING, false);
+							change |= ImGui::CheckBoxBitWize<GlslConvert::ControlFlags>("Skip Preprocessor", "preprocessor directives and comments will be removed before link",
+								&vProjectFile->m_OptimizationStruct.controlFlags, GlslConvert::ControlFlags::CONTROL_SKIP_PREPROCESSING, false);
 						}
 					}
 					ImGui::Unindent();
 
 					float y = ImGui::GetContentRegionAvail().y;
-					DrawOptimizationFlags(ImVec2(-1, y));
-					DrawCompilerFlags(ImVec2(-1, y));
+					change |= DrawOptimizationFlags(vProjectFile, ImVec2(-1, y));
+					change |= DrawCompilerFlags(vProjectFile, ImVec2(-1, y));
 				}
 				ImGui::Unindent();
 			}
@@ -168,47 +170,45 @@ int OptimizerPane::DrawPane(ProjectFile *vProjectFile, int vWidgetId)
 		ImGui::End();
 	}
 
+	if (change)
+	{
+		vProjectFile->SetProjectChange();
+	}
+
 	return OptimizerPane_WidgetId;
 }
 
-void OptimizerPane::DrawDialogAndPopups(ProjectFile *vProjectFile, ImVec2 vMin, ImVec2 vMax)
-{
-	if (igfd::ImGuiFileDialog::Instance()->FileDialog("ShaderFileDlg",
-		ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking, vMin, vMax))
-	{
-		if (igfd::ImGuiFileDialog::Instance()->IsOk)
-		{
-			LoadShaderFile(igfd::ImGuiFileDialog::Instance()->GetFilepathName());
-		}
-
-		igfd::ImGuiFileDialog::Instance()->CloseDialog("ShaderFileDlg");
-	}
-}
-
 template<typename T>
-inline void DrawBitWizeToolBar(T *vContainer)
+inline bool DrawBitWizeToolBar(T *vContainer)
 {
+	bool change = false;
 	ImGui::PushID(++OptimizerPane_WidgetId);
 	if (ImGui::Button("Alls"))
 	{
 		*vContainer = (T)(~(0)); // on inverse
+		change = true;
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("None"))
 	{
 		*vContainer = (T)(0);
+		change = true;
 	}
 	ImGui::SameLine();
 	if (ImGui::Button("Inv"))
 	{
 		*vContainer = (T)(~(*vContainer)); // on inverse
+		change = true;
 	}
 	ImGui::PopID();
+	return change;
 }
 
-void OptimizerPane::DrawOptimizationFlags(ImVec2 vSize)
+bool OptimizerPane::DrawOptimizationFlags(ProjectFile *vProjectFile, ImVec2 vSize)
 {
-#define CHECK(STR, COM, FLAG, DEF) ImGui::CheckBoxBitWize<GlslConvert::OptimizationFlags>(STR, COM, &m_OptimizationStruct.optimizationFlags, GlslConvert::OptimizationFlags::FLAG, DEF)
+	bool change = false;
+
+#define CHECK(STR, COM, FLAG, DEF) change |= ImGui::CheckBoxBitWize<GlslConvert::OptimizationFlags>(STR, COM, &vProjectFile->m_OptimizationStruct.optimizationFlags, GlslConvert::OptimizationFlags::FLAG, DEF)
 	float y = ImGui::GetCursorPosY();
 	if (ImGui::ImGui_CollapsingHeader_BitWize_OneAtATime<OptimizerPaneFlags>("Optimization Settings", -1, 
 		&m_OptimizerPaneFlags, OptimizerPaneFlags::OPT_PANE_OPTIMIZATION, false))
@@ -218,13 +218,13 @@ void OptimizerPane::DrawOptimizationFlags(ImVec2 vSize)
 		ImGui::BeginChild("##OptimizationSettings", vSize);
 		ImGui::Indent();
 		{
-			DrawBitWizeToolBar<GlslConvert::OptimizationFlags>(&m_OptimizationStruct.optimizationFlags);
+			change |= DrawBitWizeToolBar<GlslConvert::OptimizationFlags>(&vProjectFile->m_OptimizationStruct.optimizationFlags);
 			ImGui::Separator();
 			CHECK("algebraic", 0, OPT_algebraic, true);
-			if (m_OptimizationStruct.optimizationFlags & GlslConvert::OptimizationFlags::OPT_algebraic)
+			if (vProjectFile->m_OptimizationStruct.optimizationFlags & GlslConvert::OptimizationFlags::OPT_algebraic)
 			{
 				ImGui::Indent();
-				ImGui::CheckBoxDefault("native_integers", &m_OptimizationStruct.algebraicOptions.native_integers, false, 0);
+				change |= ImGui::CheckBoxDefault("native_integers", &vProjectFile->m_OptimizationStruct.algebraicOptions.native_integers, false, 0);
 				ImGui::Unindent();
 			}
 			ImGui::Separator();
@@ -241,12 +241,12 @@ void OptimizerPane::DrawOptimizationFlags(ImVec2 vSize)
 			CHECK("copy_propagation_elements", 0, OPT_copy_propagation_elements, true);
 			ImGui::Separator();
 			CHECK("dead_code", 0, OPT_dead_code, true);
-			if (m_OptimizationStruct.optimizationFlags & GlslConvert::OptimizationFlags::OPT_dead_code)
+			if (vProjectFile->m_OptimizationStruct.optimizationFlags & GlslConvert::OptimizationFlags::OPT_dead_code)
 			{
 				ImGui::Indent();
 				GlslConvert::OptimizationStruct::DeadCodeOptions def;
-				ImGui::CheckBoxDefault("Keep only assigned uniforms",
-					&m_OptimizationStruct.deadCodeOptions.keep_only_assigned_uniforms,
+				change |= ImGui::CheckBoxDefault("Keep only assigned uniforms",
+					&vProjectFile->m_OptimizationStruct.deadCodeOptions.keep_only_assigned_uniforms,
 					def.keep_only_assigned_uniforms, "true  => Keep only assigned uniforms\nfalse => Keep all uniforms");
 				ImGui::Unindent();
 			}
@@ -256,21 +256,23 @@ void OptimizerPane::DrawOptimizationFlags(ImVec2 vSize)
 			CHECK("dead_code_unlinked", 0, OPT_dead_code_unlinked, true);
 			ImGui::Separator();
 			CHECK("dead_functions", 0, OPT_dead_functions, true);
-			if (m_OptimizationStruct.optimizationFlags & GlslConvert::OptimizationFlags::OPT_dead_functions)
+			if (vProjectFile->m_OptimizationStruct.optimizationFlags & GlslConvert::OptimizationFlags::OPT_dead_functions)
 			{
 				ImGui::Indent();
 				GlslConvert::OptimizationStruct::DeadFunctionOptions def;
 				static char entryFuncBuffer[1024] = "\0";
 				if (ImGui::Button("R"))
 				{
-					m_OptimizationStruct.deadFunctionOptions.entryFunc = "main";
+					vProjectFile->m_OptimizationStruct.deadFunctionOptions.entryFunc = "main";
+					change = true;
 				}
 				ImGui::SameLine();
-				snprintf(entryFuncBuffer, 1023, m_OptimizationStruct.deadFunctionOptions.entryFunc.c_str());
+				snprintf(entryFuncBuffer, 1023, vProjectFile->m_OptimizationStruct.deadFunctionOptions.entryFunc.c_str());
 				ImGui::PushItemWidth(150.0f);
 				if (ImGui::InputText("Entry Func", entryFuncBuffer, 1023))
 				{
-					m_OptimizationStruct.deadFunctionOptions.entryFunc = entryFuncBuffer;
+					vProjectFile->m_OptimizationStruct.deadFunctionOptions.entryFunc = entryFuncBuffer;
+					change = true;
 				}
 				ImGui::PopItemWidth();
 				ImGui::Unindent();
@@ -283,35 +285,35 @@ void OptimizerPane::DrawOptimizationFlags(ImVec2 vSize)
 			CHECK("lower_discard", 0, OPT_lower_discard, true);
 			ImGui::Separator();
 			CHECK("lower_variable_index_to_cond_assign", 0, OPT_lower_variable_index_to_cond_assign, true);
-			if (m_OptimizationStruct.optimizationFlags & GlslConvert::OptimizationFlags::OPT_lower_variable_index_to_cond_assign)
+			if (vProjectFile->m_OptimizationStruct.optimizationFlags & GlslConvert::OptimizationFlags::OPT_lower_variable_index_to_cond_assign)
 			{
 				ImGui::Indent();
 				GlslConvert::OptimizationStruct::LowerVariableIndexToCondAssignOptions def;
-				ImGui::CheckBoxDefault("lower_input", &m_OptimizationStruct.lowerVariableIndexToCondAssignOptions.lower_input, def.lower_input, 0);
-				ImGui::CheckBoxDefault("lower_output", &m_OptimizationStruct.lowerVariableIndexToCondAssignOptions.lower_output, def.lower_output, 0);
-				ImGui::CheckBoxDefault("lower_temp", &m_OptimizationStruct.lowerVariableIndexToCondAssignOptions.lower_temp, def.lower_temp, 0);
-				ImGui::CheckBoxDefault("lower_uniform", &m_OptimizationStruct.lowerVariableIndexToCondAssignOptions.lower_uniform, def.lower_uniform, 0);
+				change |= ImGui::CheckBoxDefault("lower_input", &vProjectFile->m_OptimizationStruct.lowerVariableIndexToCondAssignOptions.lower_input, def.lower_input, 0);
+				change |= ImGui::CheckBoxDefault("lower_output", &vProjectFile->m_OptimizationStruct.lowerVariableIndexToCondAssignOptions.lower_output, def.lower_output, 0);
+				change |= ImGui::CheckBoxDefault("lower_temp", &vProjectFile->m_OptimizationStruct.lowerVariableIndexToCondAssignOptions.lower_temp, def.lower_temp, 0);
+				change |= ImGui::CheckBoxDefault("lower_uniform", &vProjectFile->m_OptimizationStruct.lowerVariableIndexToCondAssignOptions.lower_uniform, def.lower_uniform, 0);
 				ImGui::Unindent();
 			}
 			ImGui::Separator();
 			CHECK("lower_instructions", 0, OPT_lower_instructions, true);
-			if (m_OptimizationStruct.optimizationFlags & GlslConvert::OptimizationFlags::OPT_lower_instructions)
+			if (vProjectFile->m_OptimizationStruct.optimizationFlags & GlslConvert::OptimizationFlags::OPT_lower_instructions)
 			{
 				ImGui::Indent();
-				DrawInstructionToLowerFlags(vSize);
+				change |= DrawInstructionToLowerFlags(vProjectFile, vSize);
 				ImGui::Unindent();
 			}
 			ImGui::Separator();
 			CHECK("lower_jumps", 0, OPT_lower_jumps, true);
-			if (m_OptimizationStruct.optimizationFlags & GlslConvert::OptimizationFlags::OPT_lower_jumps)
+			if (vProjectFile->m_OptimizationStruct.optimizationFlags & GlslConvert::OptimizationFlags::OPT_lower_jumps)
 			{
 				ImGui::Indent();
 				GlslConvert::OptimizationStruct::LowerJumpsOptions def;
-				ImGui::CheckBoxDefault("pull_out_jumps", &m_OptimizationStruct.lowerJumpsOptions.pull_out_jumps, def.pull_out_jumps, 0);
-				ImGui::CheckBoxDefault("lower_sub_return", &m_OptimizationStruct.lowerJumpsOptions.lower_sub_return, def.lower_sub_return, 0);
-				ImGui::CheckBoxDefault("lower_main_return", &m_OptimizationStruct.lowerJumpsOptions.lower_main_return, def.lower_main_return, 0);
-				ImGui::CheckBoxDefault("lower_continue", &m_OptimizationStruct.lowerJumpsOptions.lower_continue, def.lower_continue, 0);
-				ImGui::CheckBoxDefault("lower_break", &m_OptimizationStruct.lowerJumpsOptions.lower_break, def.lower_break, 0);
+				change |= ImGui::CheckBoxDefault("pull_out_jumps", &vProjectFile->m_OptimizationStruct.lowerJumpsOptions.pull_out_jumps, def.pull_out_jumps, 0);
+				change |= ImGui::CheckBoxDefault("lower_sub_return", &vProjectFile->m_OptimizationStruct.lowerJumpsOptions.lower_sub_return, def.lower_sub_return, 0);
+				change |= ImGui::CheckBoxDefault("lower_main_return", &vProjectFile->m_OptimizationStruct.lowerJumpsOptions.lower_main_return, def.lower_main_return, 0);
+				change |= ImGui::CheckBoxDefault("lower_continue", &vProjectFile->m_OptimizationStruct.lowerJumpsOptions.lower_continue, def.lower_continue, 0);
+				change |= ImGui::CheckBoxDefault("lower_break", &vProjectFile->m_OptimizationStruct.lowerJumpsOptions.lower_break, def.lower_break, 0);
 				ImGui::Unindent();
 			}
 			ImGui::Separator();
@@ -322,12 +324,12 @@ void OptimizerPane::DrawOptimizationFlags(ImVec2 vSize)
 			CHECK("lower_texture_projection", 0, OPT_lower_texture_projection, true);
 			ImGui::Separator();
 			CHECK("lower_if_to_cond_assign", "Try to Flatten if statement into Conditionnal Assignements\n ( like : x = (s > 0 ? a : b) )", OPT_lower_if_to_cond_assign, true);
-			if (m_OptimizationStruct.optimizationFlags & GlslConvert::OptimizationFlags::OPT_lower_if_to_cond_assign)
+			if (vProjectFile->m_OptimizationStruct.optimizationFlags & GlslConvert::OptimizationFlags::OPT_lower_if_to_cond_assign)
 			{
 				ImGui::Indent();
 				GlslConvert::OptimizationStruct::LowerIfToCondAssignOptions def;
-				ImGui::SliderIntDefault(100, "max_depth", &m_OptimizationStruct.lowerIfToCondAssignOptions.max_depth, 0, 120, 10);
-				ImGui::SliderIntDefault(100, "min_branch_cost", &m_OptimizationStruct.lowerIfToCondAssignOptions.min_branch_cost, 0, 120, 1);
+				change |= ImGui::SliderIntDefault(100, "max_depth", &vProjectFile->m_OptimizationStruct.lowerIfToCondAssignOptions.max_depth, 0, 120, 10);
+				change |= ImGui::SliderIntDefault(100, "min_branch_cost", &vProjectFile->m_OptimizationStruct.lowerIfToCondAssignOptions.min_branch_cost, 0, 120, 1);
 				ImGui::Unindent();
 			}
 			ImGui::Separator();
@@ -367,18 +369,22 @@ void OptimizerPane::DrawOptimizationFlags(ImVec2 vSize)
 		ImGui::EndChild();
 	}
 #undef CHECK
+
+	return change;
 }
 
-void OptimizerPane::DrawCompilerFlags(ImVec2 vSize)
+bool OptimizerPane::DrawCompilerFlags(ProjectFile *vProjectFile, ImVec2 vSize)
 {
-#define CHECK(STR, COM, FLAG, DEF) ImGui::CheckBoxBitWize<GlslConvert::CompilerFlags>(STR, COM, &m_OptimizationStruct.compilerFlags, GlslConvert::CompilerFlags::FLAG, DEF)
+	bool change = false;
+
+#define CHECK(STR, COM, FLAG, DEF) change |= ImGui::CheckBoxBitWize<GlslConvert::CompilerFlags>(STR, COM, &vProjectFile->m_OptimizationStruct.compilerFlags, GlslConvert::CompilerFlags::FLAG, DEF)
 	if (ImGui::ImGui_CollapsingHeader_BitWize_OneAtATime<OptimizerPaneFlags>("Generation Settings", 
 		-1, &m_OptimizerPaneFlags, OptimizerPaneFlags::OPT_PANE_COMPILER, false))
 	{
 		ImGui::BeginChild("##GenerationSettings");
 		ImGui::Indent();
 		{
-			DrawBitWizeToolBar<GlslConvert::CompilerFlags>(&m_OptimizationStruct.compilerFlags);
+			change |= DrawBitWizeToolBar<GlslConvert::CompilerFlags>(&vProjectFile->m_OptimizationStruct.compilerFlags);
 			CHECK("EmitNoLoops", 0, COMPILER_EmitNoLoops, false);
 			CHECK("EmitNoCont", 0, COMPILER_EmitNoCont, false);
 			CHECK("EmitNoMainReturn", 0, COMPILER_EmitNoMainReturn, false);
@@ -399,12 +405,16 @@ void OptimizerPane::DrawCompilerFlags(ImVec2 vSize)
 		ImGui::EndChild();
 	}
 #undef CHECK
+
+	return change;
 }
 
-void OptimizerPane::DrawInstructionToLowerFlags(ImVec2 vSize)
+bool OptimizerPane::DrawInstructionToLowerFlags(ProjectFile *vProjectFile, ImVec2 vSize)
 {
-#define CHECK(STR, COM, FLAG, DEF) ImGui::CheckBoxBitWize<GlslConvert::InstructionToLowerFlags>(STR, COM, &m_OptimizationStruct.instructionToLowerFlags, GlslConvert::InstructionToLowerFlags::FLAG, DEF)
-	DrawBitWizeToolBar<GlslConvert::InstructionToLowerFlags>(&m_OptimizationStruct.instructionToLowerFlags);
+	bool change = false;
+
+#define CHECK(STR, COM, FLAG, DEF) change |= ImGui::CheckBoxBitWize<GlslConvert::InstructionToLowerFlags>(STR, COM, &vProjectFile->m_OptimizationStruct.instructionToLowerFlags, GlslConvert::InstructionToLowerFlags::FLAG, DEF)
+	change |= DrawBitWizeToolBar<GlslConvert::InstructionToLowerFlags>(&vProjectFile->m_OptimizationStruct.instructionToLowerFlags);
 	CHECK("SUB_TO_ADD_NEG", 0, LOWER_SUB_TO_ADD_NEG, false);
 	CHECK("EXP_TO_EXP2", 0, LOWER_EXP_TO_EXP2, false);
 	CHECK("POW_TO_EXP2", 0, LOWER_POW_TO_EXP2, false);
@@ -425,7 +435,7 @@ void OptimizerPane::DrawInstructionToLowerFlags(ImVec2 vSize)
 	CHECK("FIND_MSB_TO_FLOAT_CAST", 0, LOWER_FIND_MSB_TO_FLOAT_CAST, false);
 	CHECK("IMUL_HIGH_TO_MUL", 0, LOWER_IMUL_HIGH_TO_MUL, false);
 	CHECK("DIV_TO_MUL_RCP", 0, LOWER_DIV_TO_MUL_RCP, false);
-	if (m_OptimizationStruct.instructionToLowerFlags & GlslConvert::InstructionToLowerFlags::LOWER_DIV_TO_MUL_RCP)
+	if (vProjectFile->m_OptimizationStruct.instructionToLowerFlags & GlslConvert::InstructionToLowerFlags::LOWER_DIV_TO_MUL_RCP)
 	{
 		ImGui::Indent();
 		CHECK("FDIV_TO_MUL_RCP", 0, LOWER_FDIV_TO_MUL_RCP, false);
@@ -435,9 +445,11 @@ void OptimizerPane::DrawInstructionToLowerFlags(ImVec2 vSize)
 	CHECK("SQRT_TO_ABS_SQRT", 0, LOWER_SQRT_TO_ABS_SQRT, false);
 	CHECK("MUL64_TO_MUL_AND_MUL_HIGH", 0, LOWER_MUL64_TO_MUL_AND_MUL_HIGH, false);
 #undef CHECK
+
+	return change;
 }
 
-void OptimizerPane::Generate()
+void OptimizerPane::Generate(ProjectFile *vProjectFile)
 {
 	std::string codeToOptimize = SourcePane::Instance()->GetCode();
 
@@ -448,18 +460,41 @@ void OptimizerPane::Generate()
 
 	std::string optCode = GlslConvert::Instance()->Optimize(
 		codeToOptimize,
-		m_ShaderType,
-		m_ApiTarget,
-		m_LanguageTarget,
+		vProjectFile->m_ShaderStage,
+		vProjectFile->m_ApiTarget,
+		vProjectFile->m_LanguageTarget,
 		m_Current_OpenGlVersionStruct.DefaultGlslVersionInt,
-		m_OptimizationStruct);
+		vProjectFile->m_OptimizationStruct);
 
 	TargetPane::Instance()->SetCode(optCode);
 }
 
-void OptimizerPane::LoadShaderFile(const std::string& vFilePathName)
+void OptimizerPane::ChangeGLSLVersionInCode(const std::string& vNewVersionCode)
 {
-	auto res = FileHelper::Instance()->LoadFileToString(vFilePathName);
+	std::string version = vNewVersionCode;
+	if (vNewVersionCode.empty())
+		version = m_Current_OpenGlVersionStruct.DefineCode;
 
-	SourcePane::Instance()->SetCode(res);
+	std::string code = SourcePane::Instance()->GetCode();
+
+	if (!code.empty())
+	{
+		size_t versionPos = code.find("#version ");
+		if (versionPos != std::string::npos)
+		{
+			size_t endLine = code.find("\n", versionPos);
+			if (endLine != std::string::npos)
+			{
+				std::string versionStr = code.substr(versionPos, endLine - versionPos);
+
+				ct::replaceString(code, versionStr, vNewVersionCode);
+			}
+		}
+	}
+	else
+	{
+		code = version + "\n\n";
+	}
+
+	SourcePane::Instance()->SetCode(code);
 }
