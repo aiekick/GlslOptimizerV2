@@ -78,6 +78,9 @@ Customize the style ( the default theme is light but you can also customize app 
 
 As said im not an expert, so i you want help me, your are welcome.
 
-Contributiosn : you can send a pull reaquest or speak about in isseu tab.
+Contributiosn : you can send a pull reaquest or speak about in isseu tab
+
 Issues : use issue tab
+
 Feature request : use issue tab
+
