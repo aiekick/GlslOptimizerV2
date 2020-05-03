@@ -71,6 +71,6 @@ Customize the style ( the default theme is light but you can also customize app 
 
  ## Based on :
  
- * [Mesa3D - MIT] (https://www.mesa3d.org) (all the optimisation code come form it)
+ * [Mesa3D - MIT](https://www.mesa3d.org) (all the optimisation code come form it)
  * [glsl-optimizer - MIT](https://github.com/aras-p/glsl-optimizer) (glsl generation is based on it)
  
