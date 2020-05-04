@@ -55,7 +55,7 @@ Write/open your code and optimzie it : (see in the pane, all the params i exepos
 ![Write your code](doc/WriteYourCode.png)
 ![Optimize a shader](doc/OptimizeShader.png)
 
-Customize the style ( the default theme is light but you can also customize app theme avec editor palette)
+Customize the style ( the default theme is light but you can also customize app theme and editor palette)
 ![Customize app Style](doc/CustomizeStyle.png)
 
 ## Library used :
