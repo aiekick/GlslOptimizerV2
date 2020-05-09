@@ -3,7 +3,7 @@
 GlslOptimizerV2 is an optimizer for the glsl language with support of last opengl api and Stages 
 Vertex \ Tesselation Control \ Tesselation Evaluation \ Geometry \ Fragment
 
-Based on [Mesa3D](https://www.mesa3d.org/) and [glsl-optimizer](https://github.com/aras-p/glsl-optimizer)
+Based on [Mesa3D](https://github.com/mesa3d/mesa) and [glsl-optimizer](https://github.com/aras-p/glsl-optimizer)
 
 ## Why ?
 
@@ -68,10 +68,10 @@ Customize the style ( the default theme is light but you can also customize app 
 * [dirent - MIT]( https://github.com/tronkko/dirent)
 * [cTools - MIT](https://github.com/aiekick/cTools)
 * [ImGuiFileDialog - MIT](https://github.com/aiekick/ImGuiFileDialog)
-
+* [Mesa3D - MIT](https://github.com/mesa3d/mesa) (all the optimisation code come form it, but just the compilation code is extracted)
+ 
  ## Based on :
  
- * [Mesa3D - MIT](https://www.mesa3d.org) (all the optimisation code come form it)
  * [glsl-optimizer - MIT](https://github.com/aras-p/glsl-optimizer) (glsl generation is based on it)
  
 ## Contributions / issues :
