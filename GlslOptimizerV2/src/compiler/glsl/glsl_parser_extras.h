@@ -33,18 +33,6 @@
 #include <stdlib.h>
 #include "glsl_symbol_table.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-	extern void add_builtin_defines(struct _mesa_glsl_parse_state *state,
-		void(*add_builtin_define)(struct glcpp_parser *, const char *, int),
-		struct glcpp_parser *data,
-		unsigned version,
-		bool es);
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
-
 /* THIS is a macro defined somewhere deep in the Windows MSVC header files.
  * Undefine it here to avoid collision with the lexer's THIS token.
  */
@@ -371,7 +359,7 @@ struct _mesa_glsl_parse_state {
       return EXT_shader_implicit_conversions_enable || is_version(120, 0);
    }
 
-   bool has_implicit_uint_to_int_conversion() const
+   bool has_implicit_int_to_uint_conversion() const
    {
       return ARB_gpu_shader5_enable ||
              MESA_shader_integer_functions_enable ||
@@ -400,7 +388,8 @@ struct _mesa_glsl_parse_state {
    bool compat_shader;
    unsigned language_version;
    unsigned forced_language_version;
-   bool zero_init;
+   /* Bitfield of ir_variable_mode to zero init */
+   uint32_t zero_init;
    unsigned gl_version;
    gl_shader_stage stage;
 
@@ -836,6 +825,8 @@ struct _mesa_glsl_parse_state {
    bool EXT_demote_to_helper_invocation_warn;
    bool EXT_draw_buffers_enable;
    bool EXT_draw_buffers_warn;
+   bool EXT_draw_instanced_enable;
+   bool EXT_draw_instanced_warn;
    bool EXT_frag_depth_enable;
    bool EXT_frag_depth_warn;
    bool EXT_geometry_point_size_enable;
@@ -884,6 +875,8 @@ struct _mesa_glsl_parse_state {
    bool INTEL_conservative_rasterization_warn;
    bool INTEL_shader_atomic_float_minmax_enable;
    bool INTEL_shader_atomic_float_minmax_warn;
+   bool INTEL_shader_integer_functions2_enable;
+   bool INTEL_shader_integer_functions2_warn;
    bool MESA_shader_integer_functions_enable;
    bool MESA_shader_integer_functions_warn;
    bool NV_compute_shader_derivatives_enable;
@@ -894,6 +887,8 @@ struct _mesa_glsl_parse_state {
    bool NV_image_formats_warn;
    bool NV_shader_atomic_float_enable;
    bool NV_shader_atomic_float_warn;
+   bool NV_viewport_array2_enable;
+   bool NV_viewport_array2_warn;
    /*@}*/
 
    /** Extensions supported by the OpenGL implementation. */
@@ -935,6 +930,10 @@ struct _mesa_glsl_parse_state {
 
    /** Atomic counter offsets by binding */
    unsigned atomic_counter_offsets[MAX_COMBINED_ATOMIC_BUFFERS];
+
+   /** Whether gl_Layer output is viewport-relative. */
+   bool redeclares_gl_layer;
+   bool layer_viewport_relative;
 
    bool allow_extension_directive_midshader;
    bool allow_builtin_variable_redeclaration;

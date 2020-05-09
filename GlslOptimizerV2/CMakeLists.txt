@@ -46,6 +46,10 @@ file(GLOB PROJECT_SRC_UTIL_SHA1
 ${CMAKE_CURRENT_SOURCE_DIR}/src/util/sha1/*.cpp 
 ${CMAKE_CURRENT_SOURCE_DIR}/src/util/sha1/*.c
 ${CMAKE_CURRENT_SOURCE_DIR}/src/util/sha1/*.h)
+file(GLOB PROJECT_SRC_UTIL_FORMAT
+${CMAKE_CURRENT_SOURCE_DIR}/src/util/format/*.cpp 
+${CMAKE_CURRENT_SOURCE_DIR}/src/util/format/*.c
+${CMAKE_CURRENT_SOURCE_DIR}/src/util/format/*.h)
 file(GLOB PROJECT_SRC_MESA_MATH
 ${CMAKE_CURRENT_SOURCE_DIR}/src/mesa/math/*.cpp 
 ${CMAKE_CURRENT_SOURCE_DIR}/src/mesa/math/*.c
@@ -108,6 +112,7 @@ source_group(src\\compiler\\glsl\\glcpp FILES ${PROJECT_SRC_COMPILER_GLSL_GLCPP}
 source_group(src\\mesa\\main FILES ${PROJECT_SRC_MESA_MAIN})
 source_group(src\\mesa\\program FILES ${PROJECT_SRC_MESA_PROGRAM})
 source_group(src\\util\\sha1 FILES ${PROJECT_SRC_UTIL_SHA1})
+source_group(src\\util\\format FILES ${PROJECT_SRC_UTIL_FORMAT})
 source_group(src\\mesa\\math FILES ${PROJECT_SRC_MESA_MATH})
 source_group(src\\mesa\\vbo FILES ${PROJECT_SRC_MESA_VBO})
 source_group(src\\gallium FILES ${PROJECT_SRC_GALLIUM})
@@ -174,6 +179,7 @@ add_library(GlslOptimizerV2 STATIC
 	${PROJECT_SRC_MESA_MAIN}
 	${PROJECT_SRC_MESA_PROGRAM}
 	${PROJECT_SRC_UTIL_SHA1}
+	${PROJECT_SRC_UTIL_FORMAT}
 	${PROJECT_SRC_MESA_MATH}
 	${PROJECT_SRC_MESA_VBO}
 	${PROJECT_SRC_GALLIUM}

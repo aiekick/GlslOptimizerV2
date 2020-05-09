@@ -72,11 +72,6 @@ _mesa_problem(struct gl_context *ctx, const char *fmt, ...)
     va_end(vargs);
 }
 
-void _mesa_error_no_memory(const char *caller)
-{
-	fprintf(stderr, "out of memory in %s", caller);
-}
-
 void
 _mesa_reference_shader_program_data(struct gl_context *ctx,
                                     struct gl_shader_program_data **ptr,

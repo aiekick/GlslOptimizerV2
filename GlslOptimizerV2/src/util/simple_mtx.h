@@ -25,8 +25,9 @@
 #define _SIMPLE_MTX_H
 
 #include "util/futex.h"
+#include "util/macros.h"
 
-//#include "c11/threads.h"
+#include "c11/threads.h"
 
 #if defined(__GNUC__) && defined(HAVE_LINUX_FUTEX_H)
 
@@ -56,14 +57,14 @@
 
 typedef struct {
    uint32_t val;
-} //simple_mtx_t;
+} simple_mtx_t;
 
 #define _SIMPLE_MTX_INITIALIZER_NP { 0 }
 
 #define _SIMPLE_MTX_INVALID_VALUE 0xd0d0d0d0
 
 static inline void
-simple_mtx_init(//simple_mtx_t *mtx, ASSERTED int type)
+simple_mtx_init(simple_mtx_t *mtx, ASSERTED int type)
 {
    assert(type == mtx_plain);
 
@@ -71,7 +72,7 @@ simple_mtx_init(//simple_mtx_t *mtx, ASSERTED int type)
 }
 
 static inline void
-simple_mtx_destroy(ASSERTED //simple_mtx_t *mtx)
+simple_mtx_destroy(ASSERTED simple_mtx_t *mtx)
 {
 #ifndef NDEBUG
    mtx->val = _SIMPLE_MTX_INVALID_VALUE;
@@ -79,7 +80,7 @@ simple_mtx_destroy(ASSERTED //simple_mtx_t *mtx)
 }
 
 static inline void
-simple_//mtx_lock(//simple_mtx_t *mtx)
+simple_mtx_lock(simple_mtx_t *mtx)
 {
    uint32_t c;
 
@@ -98,7 +99,7 @@ simple_//mtx_lock(//simple_mtx_t *mtx)
 }
 
 static inline void
-simple_//mtx_unlock(//simple_mtx_t *mtx)
+simple_mtx_unlock(simple_mtx_t *mtx)
 {
    uint32_t c;
 
@@ -112,35 +113,57 @@ simple_//mtx_unlock(//simple_mtx_t *mtx)
    }
 }
 
+static inline void
+simple_mtx_assert_locked(simple_mtx_t *mtx)
+{
+   assert(mtx->val);
+}
+
 #else
 
-//typedef mtx_t //simple_mtx_t;
+typedef mtx_t simple_mtx_t;
 
-//#define _SIMPLE_MTX_INITIALIZER_NP _MTX_INITIALIZER_NP
+#define _SIMPLE_MTX_INITIALIZER_NP _MTX_INITIALIZER_NP
 
-/*static inline void
-simple_mtx_init(//simple_mtx_t *mtx, int type)
+static inline void
+simple_mtx_init(simple_mtx_t *mtx, int type)
 {
-   //mtx_init(mtx, type);
+   mtx_init(mtx, type);
 }
 
 static inline void
-simple_mtx_destroy(//simple_mtx_t *mtx)
+simple_mtx_destroy(simple_mtx_t *mtx)
 {
-   //mtx_destroy(mtx);
+   mtx_destroy(mtx);
 }
 
 static inline void
-simple_mtx_lock(//simple_mtx_t *mtx)
+simple_mtx_lock(simple_mtx_t *mtx)
 {
-  //mtx_lock(mtx);
+   mtx_lock(mtx);
 }
 
 static inline void
-simple_mtx_unlock(//simple_mtx_t *mtx)
+simple_mtx_unlock(simple_mtx_t *mtx)
 {
-   //mtx_unlock(mtx);
-}*/
+   mtx_unlock(mtx);
+}
+
+static inline void
+simple_mtx_assert_locked(simple_mtx_t *mtx)
+{
+#ifdef DEBUG
+   /* NOTE: this would not work for recursive mutexes, but
+    * mtx_t doesn't support those
+    */
+   int ret = mtx_trylock(mtx);
+   assert(ret == thrd_busy);
+   if (ret == thrd_success)
+      mtx_unlock(mtx);
+#else
+   (void)mtx;
+#endif
+}
 
 #endif
 

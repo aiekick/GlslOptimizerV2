@@ -34,6 +34,7 @@
 #include "glheader.h"
 #include "formats.h"
 #include "menums.h"
+#include "compiler/shader_enums.h"
 
 struct gl_bitmap_atlas;
 struct gl_buffer_object;
@@ -69,6 +70,9 @@ struct _mesa_index_buffer;
  * respect the contents of already referenced data.
  */
 #define MESA_MAP_NOWAIT_BIT       0x4000
+
+/* Mapping a buffer is allowed from any thread. */
+#define MESA_MAP_THREAD_SAFE_BIT  0x8000
 
 
 /**
@@ -450,7 +454,8 @@ struct dd_function_table {
     */
    /*@{*/
    /** Allocate a new program */
-   struct gl_program * (*NewProgram)(struct gl_context *ctx, GLenum target,
+   struct gl_program * (*NewProgram)(struct gl_context *ctx,
+                                     gl_shader_stage stage,
                                      GLuint id, bool is_arb_asm);
    /** Delete a program */
    void (*DeleteProgram)(struct gl_context *ctx, struct gl_program *prog);   
@@ -528,6 +533,8 @@ struct dd_function_table {
     * \param index_bounds_valid  are min_index and max_index valid?
     * \param min_index  lowest vertex index used
     * \param max_index  highest vertex index used
+    * \param num_instances  instance count from ARB_draw_instanced
+    * \param base_instance  base instance from ARB_base_instance
     * \param tfb_vertcount  if non-null, indicates which transform feedback
     *                       object has the vertex count.
     * \param tfb_stream  If called via DrawTransformFeedbackStream, specifies
@@ -542,8 +549,9 @@ struct dd_function_table {
                 const struct _mesa_index_buffer *ib,
                 GLboolean index_bounds_valid,
                 GLuint min_index, GLuint max_index,
+                GLuint num_instances, GLuint base_instance,
                 struct gl_transform_feedback_object *tfb_vertcount,
-                unsigned tfb_stream, struct gl_buffer_object *indirect);
+                unsigned tfb_stream);
 
 
    /**
@@ -975,6 +983,13 @@ struct dd_function_table {
 					     void *image_handle);
 
    /**
+    * \name GL_EXT_EGL_image_storage interface
+    */
+   void (*EGLImageTargetTexStorage)(struct gl_context *ctx, GLenum target,
+                                    struct gl_texture_object *texObj,
+                                    struct gl_texture_image *texImage,
+                                    GLeglImageOES image_handle);
+   /**
     * \name GL_EXT_transform_feedback interface
     */
    struct gl_transform_feedback_object *
@@ -1319,10 +1334,6 @@ struct dd_function_table {
  *
  * Generally, these pointers point to functions in the VBO module.
  */
-#ifndef GLAPIENTRYP
-#define GLAPIENTRYP GLAPIENTRY *
-#endif
-
 typedef struct {
    void (GLAPIENTRYP ArrayElement)( GLint );
    void (GLAPIENTRYP Color3f)( GLfloat, GLfloat, GLfloat );
@@ -1372,7 +1383,7 @@ typedef struct {
    void (GLAPIENTRYP Begin)( GLenum );
    void (GLAPIENTRYP End)( void );
    void (GLAPIENTRYP PrimitiveRestartNV)( void );
-   // Originally for GL_NV_vertex_program, now used only dlist.c and friends 
+   /* Originally for GL_NV_vertex_program, now used only dlist.c and friends */
    void (GLAPIENTRYP VertexAttrib1fNV)( GLuint index, GLfloat x );
    void (GLAPIENTRYP VertexAttrib1fvNV)( GLuint index, const GLfloat *v );
    void (GLAPIENTRYP VertexAttrib2fNV)( GLuint index, GLfloat x, GLfloat y );
@@ -1381,7 +1392,7 @@ typedef struct {
    void (GLAPIENTRYP VertexAttrib3fvNV)( GLuint index, const GLfloat *v );
    void (GLAPIENTRYP VertexAttrib4fNV)( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w );
    void (GLAPIENTRYP VertexAttrib4fvNV)( GLuint index, const GLfloat *v );
-   // GL_ARB_vertex_program 
+   /* GL_ARB_vertex_program */
    void (GLAPIENTRYP VertexAttrib1fARB)( GLuint index, GLfloat x );
    void (GLAPIENTRYP VertexAttrib1fvARB)( GLuint index, const GLfloat *v );
    void (GLAPIENTRYP VertexAttrib2fARB)( GLuint index, GLfloat x, GLfloat y );
@@ -1390,7 +1401,8 @@ typedef struct {
    void (GLAPIENTRYP VertexAttrib3fvARB)( GLuint index, const GLfloat *v );
    void (GLAPIENTRYP VertexAttrib4fARB)( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w );
    void (GLAPIENTRYP VertexAttrib4fvARB)( GLuint index, const GLfloat *v );
-   // GL_EXT_gpu_shader4 / GL 3.0 
+
+   /* GL_EXT_gpu_shader4 / GL 3.0 */
    void (GLAPIENTRYP VertexAttribI1i)( GLuint index, GLint x);
    void (GLAPIENTRYP VertexAttribI2i)( GLuint index, GLint x, GLint y);
    void (GLAPIENTRYP VertexAttribI3i)( GLuint index, GLint x, GLint y, GLint z);
@@ -1407,7 +1419,7 @@ typedef struct {
    void (GLAPIENTRYP VertexAttribI3uiv)( GLuint index, const GLuint *v);
    void (GLAPIENTRYP VertexAttribI4uiv)( GLuint index, const GLuint *v);
 
-   // GL_ARB_vertex_type_10_10_10_2_rev / GL3.3
+   /* GL_ARB_vertex_type_10_10_10_2_rev / GL3.3 */
    void (GLAPIENTRYP VertexP2ui)( GLenum type, GLuint value );
    void (GLAPIENTRYP VertexP2uiv)( GLenum type, const GLuint *value);
 
@@ -1471,7 +1483,7 @@ typedef struct {
 					 GLboolean normalized,
 					 const GLuint *value);
 
-   // GL_ARB_vertex_attrib_64bit / GL 4.1 
+   /* GL_ARB_vertex_attrib_64bit / GL 4.1 */
    void (GLAPIENTRYP VertexAttribL1d)( GLuint index, GLdouble x);
    void (GLAPIENTRYP VertexAttribL2d)( GLuint index, GLdouble x, GLdouble y);
    void (GLAPIENTRYP VertexAttribL3d)( GLuint index, GLdouble x, GLdouble y, GLdouble z);
@@ -1486,5 +1498,6 @@ typedef struct {
    void (GLAPIENTRYP VertexAttribL1ui64ARB)( GLuint index, GLuint64EXT x);
    void (GLAPIENTRYP VertexAttribL1ui64vARB)( GLuint index, const GLuint64EXT *v);
 } GLvertexformat;
+
 
 #endif /* DD_INCLUDED */

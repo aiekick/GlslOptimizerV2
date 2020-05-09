@@ -49,9 +49,8 @@ public:
 
 class ir_dead_functions_visitor : public ir_hierarchical_visitor {
 public:
-   ir_dead_functions_visitor(const char *vEntryFunc)
+   ir_dead_functions_visitor()
    {
-	   entryFunc = vEntryFunc;
       this->mem_ctx = ralloc_context(NULL);
    }
 
@@ -68,7 +67,6 @@ public:
    /* List of signature_entry */
    exec_list signature_list;
    void *mem_ctx;
-   const char *entryFunc;
 };
 
 } /* unnamed namespace */
@@ -86,18 +84,21 @@ ir_dead_functions_visitor::get_signature_entry(ir_function_signature *sig)
    return entry;
 }
 
+
 ir_visitor_status
 ir_dead_functions_visitor::visit_enter(ir_function_signature *ir)
 {
    signature_entry *entry = this->get_signature_entry(ir);
 
-   if (strcmp(ir->function_name(), entryFunc) == 0) 
-   {
+   if (strcmp(ir->function_name(), "main") == 0) {
       entry->used = true;
    }
-   	 
+
+
+
    return visit_continue;
 }
+
 
 ir_visitor_status
 ir_dead_functions_visitor::visit_enter(ir_call *ir)
@@ -110,9 +111,9 @@ ir_dead_functions_visitor::visit_enter(ir_call *ir)
 }
 
 bool
-do_dead_functions(exec_list *instructions, const char *vEntryFunc)
+do_dead_functions(exec_list *instructions)
 {
-   ir_dead_functions_visitor v(vEntryFunc);
+   ir_dead_functions_visitor v;
    bool progress = false;
 
    visit_list_elements(&v, instructions);

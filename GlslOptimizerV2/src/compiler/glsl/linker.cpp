@@ -82,11 +82,11 @@
 #include "ir_rvalue_visitor.h"
 #include "ir_uniform.h"
 #include "builtin_functions.h"
-//#include "shader_cache.h"
+#include "shader_cache.h"
 #include "util/u_string.h"
 #include "util/u_math.h"
 
-#include "main/imports.h"
+
 #include "main/shaderobj.h"
 #include "main/enums.h"
 #include "main/mtypes.h"
@@ -260,6 +260,8 @@ public:
 
 class array_resize_visitor : public deref_type_updater {
 public:
+   using deref_type_updater::visit;
+
    unsigned num_vertices;
    gl_shader_program *prog;
    gl_shader_stage stage;
@@ -1062,9 +1064,13 @@ cross_validate_globals(struct gl_context *ctx, struct gl_shader_program *prog,
           * no vendor actually implemented that behavior.  The 4.20
           * behavior matches the implemented behavior of at least one other
           * vendor, so we'll implement that for all GLSL versions.
+          * If (at least) one of these constant expressions is implicit,
+          * because it was added by glsl_zero_init, we skip the verification.
           */
          if (var->constant_initializer != NULL) {
-            if (existing->constant_initializer != NULL) {
+            if (existing->constant_initializer != NULL &&
+                !existing->data.is_implicit_initializer &&
+                !var->data.is_implicit_initializer) {
                if (!var->constant_initializer->has_value(existing->constant_initializer)) {
                   linker_error(prog, "initializers for %s "
                                "`%s' have differing values\n",
@@ -1076,7 +1082,8 @@ cross_validate_globals(struct gl_context *ctx, struct gl_shader_program *prog,
                 * not have an initializer but a later instance does,
                 * replace the former with the later.
                 */
-               variables->replace_variable(existing->name, var);
+               if (!var->data.is_implicit_initializer)
+                  variables->replace_variable(existing->name, var);
             }
          }
 
@@ -1506,6 +1513,8 @@ move_non_declarations(exec_list *instructions, exec_node *last,
  */
 class array_sizing_visitor : public deref_type_updater {
 public:
+   using deref_type_updater::visit;
+
    array_sizing_visitor()
       : mem_ctx(ralloc_context(NULL)),
         unnamed_interfaces(_mesa_pointer_hash_table_create(NULL))
@@ -1808,6 +1817,40 @@ link_bindless_layout_qualifiers(struct gl_shader_program *prog,
          linker_error(prog, "both bindless_sampler and bound_sampler, or "
                       "bindless_image and bound_image, can't be declared at "
                       "global scope");
+      }
+   }
+}
+
+/**
+ * Check for conflicting viewport_relative settings across shaders, and sets
+ * the value for the linked shader.
+ */
+static void
+link_layer_viewport_relative_qualifier(struct gl_shader_program *prog,
+                                       struct gl_program *gl_prog,
+                                       struct gl_shader **shader_list,
+                                       unsigned num_shaders)
+{
+   unsigned i;
+
+   /* Find first shader with explicit layer declaration */
+   for (i = 0; i < num_shaders; i++) {
+      if (shader_list[i]->redeclares_gl_layer) {
+         gl_prog->info.layer_viewport_relative =
+            shader_list[i]->layer_viewport_relative;
+         break;
+      }
+   }
+
+   /* Now make sure that each subsequent shader's explicit layer declaration
+    * matches the first one's.
+    */
+   for (; i < num_shaders; i++) {
+      if (shader_list[i]->redeclares_gl_layer &&
+          shader_list[i]->layer_viewport_relative !=
+          gl_prog->info.layer_viewport_relative) {
+         linker_error(prog, "all gl_Layer redeclarations must have identical "
+                      "viewport_relative settings");
       }
    }
 }
@@ -2429,9 +2472,7 @@ link_intrastage_shaders(void *mem_ctx,
 
    /* Create program and attach it to the linked shader */
    struct gl_program *gl_prog =
-      ctx->Driver.NewProgram(ctx,
-                             _mesa_shader_stage_to_program(shader_list[0]->Stage),
-                             prog->Name, false);
+      ctx->Driver.NewProgram(ctx, shader_list[0]->Stage, prog->Name, false);
    if (!gl_prog) {
       prog->data->LinkStatus = LINKING_FAILURE;
       _mesa_delete_linked_shader(ctx, linked);
@@ -2456,6 +2497,8 @@ link_intrastage_shaders(void *mem_ctx,
       link_xfb_stride_layout_qualifiers(ctx, prog, shader_list, num_shaders);
 
    link_bindless_layout_qualifiers(prog, shader_list, num_shaders);
+
+   link_layer_viewport_relative_qualifier(prog, gl_prog, shader_list, num_shaders);
 
    populate_symbol_table(linked, shader_list[0]->symbols);
 
@@ -2530,6 +2573,7 @@ link_intrastage_shaders(void *mem_ctx,
    for (unsigned i = 0; i < num_ubo_blocks; i++) {
       linked->Program->sh.UniformBlocks[i] = &ubo_blocks[i];
    }
+   linked->Program->sh.NumUniformBlocks = num_ubo_blocks;
    linked->Program->info.num_ubos = num_ubo_blocks;
 
    /* Copy ssbo blocks to linked shader list */
@@ -3322,135 +3366,6 @@ store_fragdepth_layout(struct gl_shader_program *prog)
 }
 
 /**
- * Validate the resources used by a program versus the implementation limits
- */
-static void
-check_resources(struct gl_context *ctx, struct gl_shader_program *prog)
-{
-   unsigned total_uniform_blocks = 0;
-   unsigned total_shader_storage_blocks = 0;
-
-   for (unsigned i = 0; i < MESA_SHADER_STAGES; i++) {
-      struct gl_linked_shader *sh = prog->_LinkedShaders[i];
-
-      if (sh == NULL)
-         continue;
-
-      if (sh->num_uniform_components >
-          ctx->Const.Program[i].MaxUniformComponents) {
-         if (ctx->Const.GLSLSkipStrictMaxUniformLimitCheck) {
-            linker_warning(prog, "Too many %s shader default uniform block "
-                           "components, but the driver will try to optimize "
-                           "them out; this is non-portable out-of-spec "
-                           "behavior\n",
-                           _mesa_shader_stage_to_string(i));
-         } else {
-            linker_error(prog, "Too many %s shader default uniform block "
-                         "components\n",
-                         _mesa_shader_stage_to_string(i));
-         }
-      }
-
-      if (sh->num_combined_uniform_components >
-          ctx->Const.Program[i].MaxCombinedUniformComponents) {
-         if (ctx->Const.GLSLSkipStrictMaxUniformLimitCheck) {
-            linker_warning(prog, "Too many %s shader uniform components, "
-                           "but the driver will try to optimize them out; "
-                           "this is non-portable out-of-spec behavior\n",
-                           _mesa_shader_stage_to_string(i));
-         } else {
-            linker_error(prog, "Too many %s shader uniform components\n",
-                         _mesa_shader_stage_to_string(i));
-         }
-      }
-
-      total_shader_storage_blocks += sh->Program->info.num_ssbos;
-      total_uniform_blocks += sh->Program->info.num_ubos;
-   }
-
-   if (total_uniform_blocks > ctx->Const.MaxCombinedUniformBlocks) {
-      linker_error(prog, "Too many combined uniform blocks (%d/%d)\n",
-                   total_uniform_blocks, ctx->Const.MaxCombinedUniformBlocks);
-   }
-
-   if (total_shader_storage_blocks > ctx->Const.MaxCombinedShaderStorageBlocks) {
-      linker_error(prog, "Too many combined shader storage blocks (%d/%d)\n",
-                   total_shader_storage_blocks,
-                   ctx->Const.MaxCombinedShaderStorageBlocks);
-   }
-
-   for (unsigned i = 0; i < prog->data->NumUniformBlocks; i++) {
-      if (prog->data->UniformBlocks[i].UniformBufferSize >
-          ctx->Const.MaxUniformBlockSize) {
-         linker_error(prog, "Uniform block %s too big (%d/%d)\n",
-                      prog->data->UniformBlocks[i].Name,
-                      prog->data->UniformBlocks[i].UniformBufferSize,
-                      ctx->Const.MaxUniformBlockSize);
-      }
-   }
-
-   for (unsigned i = 0; i < prog->data->NumShaderStorageBlocks; i++) {
-      if (prog->data->ShaderStorageBlocks[i].UniformBufferSize >
-          ctx->Const.MaxShaderStorageBlockSize) {
-         linker_error(prog, "Shader storage block %s too big (%d/%d)\n",
-                      prog->data->ShaderStorageBlocks[i].Name,
-                      prog->data->ShaderStorageBlocks[i].UniformBufferSize,
-                      ctx->Const.MaxShaderStorageBlockSize);
-      }
-   }
-}
-
-static void
-link_calculate_subroutine_compat(struct gl_shader_program *prog)
-{
-   unsigned mask = prog->data->linked_stages;
-   while (mask) {
-      const int i = u_bit_scan(&mask);
-      struct gl_program *p = prog->_LinkedShaders[i]->Program;
-
-      for (unsigned j = 0; j < p->sh.NumSubroutineUniformRemapTable; j++) {
-         if (p->sh.SubroutineUniformRemapTable[j] == INACTIVE_UNIFORM_EXPLICIT_LOCATION)
-            continue;
-
-         struct gl_uniform_storage *uni = p->sh.SubroutineUniformRemapTable[j];
-
-         if (!uni)
-            continue;
-
-         int count = 0;
-         if (p->sh.NumSubroutineFunctions == 0) {
-            linker_error(prog, "subroutine uniform %s defined but no valid functions found\n", uni->type->name);
-            continue;
-         }
-         for (unsigned f = 0; f < p->sh.NumSubroutineFunctions; f++) {
-            struct gl_subroutine_function *fn = &p->sh.SubroutineFunctions[f];
-            for (int k = 0; k < fn->num_compat_types; k++) {
-               if (fn->types[k] == uni->type) {
-                  count++;
-                  break;
-               }
-            }
-         }
-         uni->num_compatible_subroutines = count;
-      }
-   }
-}
-
-static void
-check_subroutine_resources(struct gl_shader_program *prog)
-{
-   unsigned mask = prog->data->linked_stages;
-   while (mask) {
-      const int i = u_bit_scan(&mask);
-      struct gl_program *p = prog->_LinkedShaders[i]->Program;
-
-      if (p->sh.NumSubroutineUniformRemapTable > MAX_SUBROUTINE_UNIFORM_LOCATIONS) {
-         linker_error(prog, "Too many %s shader subroutine uniforms\n",
-                      _mesa_shader_stage_to_string(i));
-      }
-   }
-}
-/**
  * Validate shader image resources.
  */
 static void
@@ -4165,8 +4080,10 @@ build_program_resource_list(struct gl_context *ctx,
          return;
    }
 
-   if (add_packed_varyings_only)
+   if (add_packed_varyings_only) {
+      _mesa_set_destroy(resource_set, NULL);
       return;
+   }
 
    if (!add_fragdata_arrays(ctx, shProg, resource_set))
       return;
@@ -4528,17 +4445,20 @@ link_and_validate_uniforms(struct gl_context *ctx,
                            struct gl_shader_program *prog)
 {
    update_array_sizes(prog);
-   link_assign_uniform_locations(prog, ctx);
 
-   if (prog->data->LinkStatus == LINKING_FAILURE)
-      return;
+   if (!ctx->Const.UseNIRGLSLLinker) {
+      link_assign_uniform_locations(prog, ctx);
 
-   link_assign_atomic_counter_resources(ctx, prog);
-   link_calculate_subroutine_compat(prog);
-   check_resources(ctx, prog);
-   check_subroutine_resources(prog);
-   check_image_resources(ctx, prog);
-   link_check_atomic_counter_resources(ctx, prog);
+      if (prog->data->LinkStatus == LINKING_FAILURE)
+         return;
+
+      link_util_calculate_subroutine_compat(prog);
+      link_util_check_uniform_resources(ctx, prog);
+      link_util_check_subroutine_resources(prog);
+      check_image_resources(ctx, prog);
+      link_assign_atomic_counter_resources(ctx, prog);
+      link_check_atomic_counter_resources(ctx, prog);
+   }
 }
 
 static bool

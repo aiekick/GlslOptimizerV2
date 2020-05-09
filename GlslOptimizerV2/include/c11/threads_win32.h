@@ -221,7 +221,7 @@ static int impl_cond_do_wait(cnd_t *cond, mtx_t *mtx, const struct timespec *ts)
     cond->blocked++;
     ReleaseSemaphore(cond->sem_gate, 1, NULL);
 
-    //mtx_unlock(mtx);
+    mtx_unlock(mtx);
 
     w = WaitForSingleObject(cond->sem_queue, ts ? impl_timespec2msec(ts) : INFINITE);
     timeout = (w == WAIT_TIMEOUT);
@@ -258,7 +258,7 @@ static int impl_cond_do_wait(cnd_t *cond, mtx_t *mtx, const struct timespec *ts)
         ReleaseSemaphore(cond->sem_gate, 1, NULL);
     }
 
-   //mtx_lock(mtx);
+    mtx_lock(mtx);
     return timeout ? thrd_busy : thrd_success;
 }
 #endif  // ifndef EMULATED_THREADS_USE_NATIVE_CV
@@ -433,7 +433,7 @@ mtx_init(mtx_t *mtx, int type)
 
 // 7.25.4.3
 static inline int
-////mtx_lock(mtx_t *mtx)
+mtx_lock(mtx_t *mtx)
 {
     if (!mtx) return thrd_error;
     EnterCriticalSection(mtx);
@@ -468,7 +468,7 @@ mtx_trylock(mtx_t *mtx)
 
 // 7.25.4.6
 static inline int
-//mtx_unlock(mtx_t *mtx)
+mtx_unlock(mtx_t *mtx)
 {
     if (!mtx) return thrd_error;
     LeaveCriticalSection(mtx);

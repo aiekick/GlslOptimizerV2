@@ -1248,6 +1248,7 @@ _token_print(struct _mesa_string_buffer *out, token_t *token)
       break;
    case IDENTIFIER:
    case INTEGER_STRING:
+   case PATH:
    case OTHER:
       _mesa_string_buffer_append(out, token->value.str);
       break;
@@ -1469,7 +1470,7 @@ glcpp_parser_create(struct gl_context *gl_ctx,
    parser = ralloc (NULL, glcpp_parser_t);
 
    glcpp_lex_init_extra (parser, &parser->scanner);
-   parser->defines = _mesa_hash_table_create(NULL, _mesa_key_hash_string,
+   parser->defines = _mesa_hash_table_create(NULL, _mesa_hash_string,
                                              _mesa_key_string_equal);
    parser->linalloc = linear_alloc_parent(parser, 0);
    parser->active = NULL;

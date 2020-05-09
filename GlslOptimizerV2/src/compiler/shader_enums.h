@@ -261,6 +261,7 @@ typedef enum
    VARYING_SLOT_BOUNDING_BOX0, /* Only appears as TCS output. */
    VARYING_SLOT_BOUNDING_BOX1, /* Only appears as TCS output. */
    VARYING_SLOT_VIEW_INDEX,
+   VARYING_SLOT_VIEWPORT_MASK, /* Does not appear in FS */
    VARYING_SLOT_VAR0, /* First generic varying slot */
    /* the remaining are simply for the benefit of gl_varying_slot_name()
     * and not to be construed as an upper bound:
@@ -328,6 +329,10 @@ const char *gl_varying_slot_name(gl_varying_slot slot);
 #define VARYING_BIT_PSIZ BITFIELD64_BIT(VARYING_SLOT_PSIZ)
 #define VARYING_BIT_BFC0 BITFIELD64_BIT(VARYING_SLOT_BFC0)
 #define VARYING_BIT_BFC1 BITFIELD64_BIT(VARYING_SLOT_BFC1)
+#define VARYING_BITS_COLOR (VARYING_BIT_COL0 | \
+                            VARYING_BIT_COL1 |        \
+                            VARYING_BIT_BFC0 |        \
+                            VARYING_BIT_BFC1)
 #define VARYING_BIT_EDGE BITFIELD64_BIT(VARYING_SLOT_EDGE)
 #define VARYING_BIT_CLIP_VERTEX BITFIELD64_BIT(VARYING_SLOT_CLIP_VERTEX)
 #define VARYING_BIT_CLIP_DIST0 BITFIELD64_BIT(VARYING_SLOT_CLIP_DIST0)
@@ -343,6 +348,7 @@ const char *gl_varying_slot_name(gl_varying_slot slot);
 #define VARYING_BIT_TESS_LEVEL_INNER BITFIELD64_BIT(VARYING_SLOT_TESS_LEVEL_INNER)
 #define VARYING_BIT_BOUNDING_BOX0 BITFIELD64_BIT(VARYING_SLOT_BOUNDING_BOX0)
 #define VARYING_BIT_BOUNDING_BOX1 BITFIELD64_BIT(VARYING_SLOT_BOUNDING_BOX1)
+#define VARYING_BIT_VIEWPORT_MASK BITFIELD64_BIT(VARYING_SLOT_VIEWPORT_MASK)
 #define VARYING_BIT_VAR(V) BITFIELD64_BIT(VARYING_SLOT_VAR0 + (V))
 /*@}*/
 
@@ -630,16 +636,20 @@ typedef enum
    SYSTEM_VALUE_VERTEX_CNT,
 
    /**
-    * Driver internal varying-coords, used for varying-fetch instructions.
-    * Not externally visible.
+    * Required for AMD_shader_explicit_vertex_parameter and also used for
+    * varying-fetch instructions.
     *
     * The _SIZE value is "primitive size", used to scale i/j in primitive
     * space to pixel space.
     */
-   SYSTEM_VALUE_BARYCENTRIC_PIXEL,
-   SYSTEM_VALUE_BARYCENTRIC_SAMPLE,
-   SYSTEM_VALUE_BARYCENTRIC_CENTROID,
-   SYSTEM_VALUE_BARYCENTRIC_SIZE,
+   SYSTEM_VALUE_BARYCENTRIC_PERSP_PIXEL,
+   SYSTEM_VALUE_BARYCENTRIC_PERSP_SAMPLE,
+   SYSTEM_VALUE_BARYCENTRIC_PERSP_CENTROID,
+   SYSTEM_VALUE_BARYCENTRIC_PERSP_SIZE,
+   SYSTEM_VALUE_BARYCENTRIC_LINEAR_PIXEL,
+   SYSTEM_VALUE_BARYCENTRIC_LINEAR_CENTROID,
+   SYSTEM_VALUE_BARYCENTRIC_LINEAR_SAMPLE,
+   SYSTEM_VALUE_BARYCENTRIC_PULL_MODEL,
 
    /**
     * IR3 specific geometry shader and tesselation control shader system
@@ -667,6 +677,7 @@ enum glsl_interp_mode
    INTERP_MODE_SMOOTH,
    INTERP_MODE_FLAT,
    INTERP_MODE_NOPERSPECTIVE,
+   INTERP_MODE_EXPLICIT,
    INTERP_MODE_COUNT /**< Number of interpolation qualifiers */
 };
 

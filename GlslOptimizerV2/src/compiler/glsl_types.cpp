@@ -29,7 +29,7 @@
 #include "util/u_string.h"
 
 
-//mtx_t glsl_type::hash_mutex = _MTX_INITIALIZER_NP;
+mtx_t glsl_type::hash_mutex = _MTX_INITIALIZER_NP;
 hash_table *glsl_type::explicit_matrix_types = NULL;
 hash_table *glsl_type::array_types = NULL;
 hash_table *glsl_type::struct_types = NULL;
@@ -462,6 +462,16 @@ const glsl_type *glsl_type::get_bare_type() const
    unreachable("Invalid base type");
 }
 
+const glsl_type *glsl_type::get_float16_type() const
+{
+   assert(this->base_type == GLSL_TYPE_FLOAT);
+
+   return get_instance(GLSL_TYPE_FLOAT16,
+                       this->vector_elements,
+                       this->matrix_columns,
+                       this->explicit_stride,
+                       this->interface_row_major);
+}
 
 static void
 hash_free_type_function(struct hash_entry *entry)
@@ -477,20 +487,20 @@ hash_free_type_function(struct hash_entry *entry)
 void
 glsl_type_singleton_init_or_ref()
 {
-  //mtx_lock(&glsl_type::hash_mutex);
+   mtx_lock(&glsl_type::hash_mutex);
    glsl_type_users++;
-   //mtx_unlock(&glsl_type::hash_mutex);
+   mtx_unlock(&glsl_type::hash_mutex);
 }
 
 void
 glsl_type_singleton_decref()
 {
-  //mtx_lock(&glsl_type::hash_mutex);
+   mtx_lock(&glsl_type::hash_mutex);
    assert(glsl_type_users > 0);
 
    /* Do not release glsl_types if they are still used. */
    if (--glsl_type_users) {
-      //mtx_unlock(&glsl_type::hash_mutex);
+      mtx_unlock(&glsl_type::hash_mutex);
       return;
    }
 
@@ -525,7 +535,7 @@ glsl_type_singleton_decref()
       glsl_type::subroutine_types = NULL;
    }
 
-   //mtx_unlock(&glsl_type::hash_mutex);
+   mtx_unlock(&glsl_type::hash_mutex);
 }
 
 
@@ -637,12 +647,12 @@ glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns,
       snprintf(name, sizeof(name), "%sx%uB%s", bare_type->name,
                explicit_stride, row_major ? "RM" : "");
 
-     //mtx_lock(&glsl_type::hash_mutex);
+      mtx_lock(&glsl_type::hash_mutex);
       assert(glsl_type_users > 0);
 
       if (explicit_matrix_types == NULL) {
          explicit_matrix_types =
-            _mesa_hash_table_create(NULL, _mesa_key_hash_string,
+            _mesa_hash_table_create(NULL, _mesa_hash_string,
                                     _mesa_key_string_equal);
       }
 
@@ -663,9 +673,11 @@ glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns,
       assert(((glsl_type *) entry->data)->matrix_columns == columns);
       assert(((glsl_type *) entry->data)->explicit_stride == explicit_stride);
 
-      //mtx_unlock(&glsl_type::hash_mutex);
+      const glsl_type *t = (const glsl_type *) entry->data;
 
-      return (const glsl_type *) entry->data;
+      mtx_unlock(&glsl_type::hash_mutex);
+
+      return t;
    }
 
    assert(!row_major);
@@ -1003,11 +1015,11 @@ glsl_type::get_array_instance(const glsl_type *base,
    snprintf(key, sizeof(key), "%p[%u]x%uB", (void *) base, array_size,
             explicit_stride);
 
-  //mtx_lock(&glsl_type::hash_mutex);
+   mtx_lock(&glsl_type::hash_mutex);
    assert(glsl_type_users > 0);
 
    if (array_types == NULL) {
-      array_types = _mesa_hash_table_create(NULL, _mesa_key_hash_string,
+      array_types = _mesa_hash_table_create(NULL, _mesa_hash_string,
                                             _mesa_key_string_equal);
    }
 
@@ -1024,9 +1036,11 @@ glsl_type::get_array_instance(const glsl_type *base,
    assert(((glsl_type *) entry->data)->length == array_size);
    assert(((glsl_type *) entry->data)->fields.array == base);
 
-   //mtx_unlock(&glsl_type::hash_mutex);
+   glsl_type *t = (glsl_type *) entry->data;
 
-   return (glsl_type *) entry->data;
+   mtx_unlock(&glsl_type::hash_mutex);
+
+   return t;
 }
 
 bool
@@ -1204,7 +1218,7 @@ glsl_type::get_struct_instance(const glsl_struct_field *fields,
 {
    const glsl_type key(fields, num_fields, name, packed);
 
-  //mtx_lock(&glsl_type::hash_mutex);
+   mtx_lock(&glsl_type::hash_mutex);
    assert(glsl_type_users > 0);
 
    if (struct_types == NULL) {
@@ -1225,9 +1239,11 @@ glsl_type::get_struct_instance(const glsl_struct_field *fields,
    assert(strcmp(((glsl_type *) entry->data)->name, name) == 0);
    assert(((glsl_type *) entry->data)->packed == packed);
 
-   //mtx_unlock(&glsl_type::hash_mutex);
+   glsl_type *t = (glsl_type *) entry->data;
 
-   return (glsl_type *) entry->data;
+   mtx_unlock(&glsl_type::hash_mutex);
+
+   return t;
 }
 
 
@@ -1240,7 +1256,7 @@ glsl_type::get_interface_instance(const glsl_struct_field *fields,
 {
    const glsl_type key(fields, num_fields, packing, row_major, block_name);
 
-  //mtx_lock(&glsl_type::hash_mutex);
+   mtx_lock(&glsl_type::hash_mutex);
    assert(glsl_type_users > 0);
 
    if (interface_types == NULL) {
@@ -1261,9 +1277,11 @@ glsl_type::get_interface_instance(const glsl_struct_field *fields,
    assert(((glsl_type *) entry->data)->length == num_fields);
    assert(strcmp(((glsl_type *) entry->data)->name, block_name) == 0);
 
-   //mtx_unlock(&glsl_type::hash_mutex);
+   glsl_type *t = (glsl_type *) entry->data;
 
-   return (glsl_type *) entry->data;
+   mtx_unlock(&glsl_type::hash_mutex);
+
+   return t;
 }
 
 const glsl_type *
@@ -1271,7 +1289,7 @@ glsl_type::get_subroutine_instance(const char *subroutine_name)
 {
    const glsl_type key(subroutine_name);
 
-  //mtx_lock(&glsl_type::hash_mutex);
+   mtx_lock(&glsl_type::hash_mutex);
    assert(glsl_type_users > 0);
 
    if (subroutine_types == NULL) {
@@ -1290,9 +1308,11 @@ glsl_type::get_subroutine_instance(const char *subroutine_name)
    assert(((glsl_type *) entry->data)->base_type == GLSL_TYPE_SUBROUTINE);
    assert(strcmp(((glsl_type *) entry->data)->name, subroutine_name) == 0);
 
- //  //mtx_unlock(&glsl_type::hash_mutex);
+   glsl_type *t = (glsl_type *) entry->data;
 
-   return (glsl_type *) entry->data;
+   mtx_unlock(&glsl_type::hash_mutex);
+
+   return t;
 }
 
 
@@ -1325,7 +1345,7 @@ glsl_type::get_function_instance(const glsl_type *return_type,
 {
    const glsl_type key(return_type, params, num_params);
 
-  ////mtx_lock(&glsl_type::hash_mutex);
+   mtx_lock(&glsl_type::hash_mutex);
    assert(glsl_type_users > 0);
 
    if (function_types == NULL) {
@@ -1345,7 +1365,7 @@ glsl_type::get_function_instance(const glsl_type *return_type,
    assert(t->base_type == GLSL_TYPE_FUNCTION);
    assert(t->length == num_params);
 
- //  //mtx_unlock(&glsl_type::hash_mutex);
+   mtx_unlock(&glsl_type::hash_mutex);
 
    return t;
 }
@@ -1647,7 +1667,7 @@ glsl_type::can_implicitly_convert_to(const glsl_type *desired,
     * state-dependent checks have already happened though, so allow anything
     * that's allowed in any shader version.
     */
-   if ((!state || state->has_implicit_uint_to_int_conversion()) &&
+   if ((!state || state->has_implicit_int_to_uint_conversion()) &&
          desired->base_type == GLSL_TYPE_UINT && this->base_type == GLSL_TYPE_INT)
       return true;
 
@@ -2432,7 +2452,7 @@ glsl_type::get_explicit_type_for_size_align(glsl_type_size_align_func type_info,
 }
 
 unsigned
-glsl_type::count_attribute_slots(bool is_gl_vertex_input) const
+glsl_type::count_vec4_slots(bool is_gl_vertex_input, bool is_bindless) const
 {
    /* From page 31 (page 37 of the PDF) of the GLSL 1.50 spec:
     *
@@ -2469,8 +2489,6 @@ glsl_type::count_attribute_slots(bool is_gl_vertex_input) const
    case GLSL_TYPE_FLOAT:
    case GLSL_TYPE_FLOAT16:
    case GLSL_TYPE_BOOL:
-   case GLSL_TYPE_SAMPLER:
-   case GLSL_TYPE_IMAGE:
       return this->matrix_columns;
    case GLSL_TYPE_DOUBLE:
    case GLSL_TYPE_UINT64:
@@ -2485,7 +2503,7 @@ glsl_type::count_attribute_slots(bool is_gl_vertex_input) const
 
       for (unsigned i = 0; i < this->length; i++) {
          const glsl_type *member_type = this->fields.structure[i].type;
-         size += member_type->count_attribute_slots(is_gl_vertex_input);
+         size += member_type->count_vec4_slots(is_gl_vertex_input, is_bindless);
       }
 
       return size;
@@ -2493,8 +2511,16 @@ glsl_type::count_attribute_slots(bool is_gl_vertex_input) const
 
    case GLSL_TYPE_ARRAY: {
       const glsl_type *element = this->fields.array;
-      return this->length * element->count_attribute_slots(is_gl_vertex_input);
+      return this->length * element->count_vec4_slots(is_gl_vertex_input,
+                                                      is_bindless);
    }
+
+   case GLSL_TYPE_SAMPLER:
+   case GLSL_TYPE_IMAGE:
+      if (!is_bindless)
+         return 0;
+      else
+         return 1;
 
    case GLSL_TYPE_SUBROUTINE:
       return 1;
@@ -2511,32 +2537,63 @@ glsl_type::count_attribute_slots(bool is_gl_vertex_input) const
    return 0;
 }
 
+unsigned
+glsl_type::count_dword_slots(bool is_bindless) const
+{
+   switch (this->base_type) {
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_BOOL:
+      return this->components();
+   case GLSL_TYPE_UINT16:
+   case GLSL_TYPE_INT16:
+   case GLSL_TYPE_FLOAT16:
+      return DIV_ROUND_UP(this->components(), 2);
+   case GLSL_TYPE_UINT8:
+   case GLSL_TYPE_INT8:
+      return DIV_ROUND_UP(this->components(), 4);
+   case GLSL_TYPE_IMAGE:
+   case GLSL_TYPE_SAMPLER:
+      if (!is_bindless)
+         return 0;
+      /* FALLTHROUGH */
+   case GLSL_TYPE_DOUBLE:
+   case GLSL_TYPE_UINT64:
+   case GLSL_TYPE_INT64:
+      return this->components() * 2;
+   case GLSL_TYPE_ARRAY:
+      return this->fields.array->count_dword_slots(is_bindless) *
+             this->length;
+
+   case GLSL_TYPE_INTERFACE:
+   case GLSL_TYPE_STRUCT: {
+      unsigned size = 0;
+      for (unsigned i = 0; i < this->length; i++) {
+         size += this->fields.structure[i].type->count_dword_slots(is_bindless);
+      }
+      return size;
+   }
+
+   case GLSL_TYPE_ATOMIC_UINT:
+      return 0;
+   case GLSL_TYPE_SUBROUTINE:
+      return 1;
+   case GLSL_TYPE_VOID:
+   case GLSL_TYPE_ERROR:
+   case GLSL_TYPE_FUNCTION:
+   default:
+      unreachable("invalid type in st_glsl_type_dword_size()");
+   }
+
+   return 0;
+}
+
 int
 glsl_type::coordinate_components() const
 {
-   int size;
-
-   switch (sampler_dimensionality) {
-   case GLSL_SAMPLER_DIM_1D:
-   case GLSL_SAMPLER_DIM_BUF:
-      size = 1;
-      break;
-   case GLSL_SAMPLER_DIM_2D:
-   case GLSL_SAMPLER_DIM_RECT:
-   case GLSL_SAMPLER_DIM_MS:
-   case GLSL_SAMPLER_DIM_EXTERNAL:
-   case GLSL_SAMPLER_DIM_SUBPASS:
-      size = 2;
-      break;
-   case GLSL_SAMPLER_DIM_3D:
-   case GLSL_SAMPLER_DIM_CUBE:
-      size = 3;
-      break;
-   default:
-      assert(!"Should not get here.");
-      size = 1;
-      break;
-   }
+   enum glsl_sampler_dim dim = (enum glsl_sampler_dim)sampler_dimensionality;
+   int size = glsl_get_sampler_dim_coordinate_components(dim);
 
    /* Array textures need an additional component for the array index, except
     * for cubemap array images that behave like a 2D array of interleaved
@@ -2868,4 +2925,30 @@ glsl_type::cl_size() const
       return size;
    }
    return 1;
+}
+
+extern "C" {
+
+int
+glsl_get_sampler_dim_coordinate_components(enum glsl_sampler_dim dim)
+{
+   switch (dim) {
+   case GLSL_SAMPLER_DIM_1D:
+   case GLSL_SAMPLER_DIM_BUF:
+      return 1;
+   case GLSL_SAMPLER_DIM_2D:
+   case GLSL_SAMPLER_DIM_RECT:
+   case GLSL_SAMPLER_DIM_MS:
+   case GLSL_SAMPLER_DIM_EXTERNAL:
+   case GLSL_SAMPLER_DIM_SUBPASS:
+   case GLSL_SAMPLER_DIM_SUBPASS_MS:
+      return 2;
+   case GLSL_SAMPLER_DIM_3D:
+   case GLSL_SAMPLER_DIM_CUBE:
+      return 3;
+   default:
+      unreachable("Unknown sampler dim");
+   }
+}
+
 }

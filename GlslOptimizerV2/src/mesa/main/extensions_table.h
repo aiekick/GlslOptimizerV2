@@ -205,6 +205,7 @@ EXT(ATI_texture_env_combine3                , ATI_texture_env_combine3          
 EXT(ATI_texture_float                       , ARB_texture_float                      , GLL, GLC,  x ,  x , 2002)
 EXT(ATI_texture_mirror_once                 , ATI_texture_mirror_once                , GLL, GLC,  x ,  x , 2006)
 
+EXT(EXT_EGL_image_storage                   , EXT_EGL_image_storage                  , GLL, GLC , x ,  30, 2018)
 EXT(EXT_EGL_sync                            , dummy_true                             , GLL, GLC,  x ,  x , 2019)
 EXT(EXT_abgr                                , dummy_true                             , GLL, GLC,  x ,  x , 1995)
 EXT(EXT_base_instance                       , ARB_base_instance                      ,  x ,  x ,  x ,  30, 2014)
@@ -233,7 +234,7 @@ EXT(EXT_draw_buffers                        , dummy_true                        
 EXT(EXT_draw_buffers2                       , EXT_draw_buffers2                      , GLL, GLC,  x ,  x , 2006)
 EXT(EXT_draw_buffers_indexed                , ARB_draw_buffers_blend                 ,  x ,  x ,  x ,  30, 2014)
 EXT(EXT_draw_elements_base_vertex           , ARB_draw_elements_base_vertex          ,  x ,  x ,  x , ES2, 2014)
-EXT(EXT_draw_instanced                      , ARB_draw_instanced                     , GLL, GLC,  x ,  x , 2006)
+EXT(EXT_draw_instanced                      , ARB_draw_instanced                     , GLL, GLC,  x , ES2 , 2006)
 EXT(EXT_draw_range_elements                 , dummy_true                             , GLL,  x ,  x ,  x , 1997)
 EXT(EXT_float_blend                         , EXT_float_blend                        ,  x ,  x ,  x ,  30, 2015)
 EXT(EXT_fog_coord                           , dummy_true                             , GLL,  x ,  x ,  x , 1999)
@@ -312,7 +313,7 @@ EXT(EXT_texture_format_BGRA8888             , dummy_true                        
 EXT(EXT_texture_integer                     , EXT_texture_integer                    , GLL, GLC,  x ,  x , 2006)
 EXT(EXT_texture_lod_bias                    , dummy_true                             , GLL,  x , ES1,  x , 1999)
 EXT(EXT_texture_mirror_clamp                , EXT_texture_mirror_clamp               , GLL, GLC,  x ,  x , 2004)
-EXT(EXT_texture_norm16                      , dummy_true                             ,  x ,  x ,  x ,  31, 2014)
+EXT(EXT_texture_norm16                      , EXT_texture_norm16                     ,  x ,  x ,  x ,  31, 2014)
 EXT(EXT_texture_object                      , dummy_true                             , GLL,  x ,  x ,  x , 1995)
 EXT(EXT_texture_query_lod                   , ARB_texture_query_lod                  ,  x ,  x ,  x ,  30, 2019)
 EXT(EXT_texture_rectangle                   , NV_texture_rectangle                   , GLL,  x ,  x ,  x , 2004)
@@ -342,9 +343,11 @@ EXT(IBM_texture_mirrored_repeat             , dummy_true                        
 
 EXT(INGR_blend_func_separate                , EXT_blend_func_separate                , GLL,  x ,  x ,  x , 1999)
 
+EXT(INTEL_blackhole_render                  , INTEL_blackhole_render                 ,  30,  30,  x , ES2, 2018)
 EXT(INTEL_conservative_rasterization        , INTEL_conservative_rasterization       ,  x , GLC,  x ,  31, 2013)
 EXT(INTEL_performance_query                 , INTEL_performance_query                , GLL, GLC,  x , ES2, 2013)
 EXT(INTEL_shader_atomic_float_minmax        , INTEL_shader_atomic_float_minmax       , GLL, GLC,  x ,  x , 2018)
+EXT(INTEL_shader_integer_functions2         , INTEL_shader_integer_functions2        , GLL, GLC,  x ,  x , 2018)
 
 EXT(KHR_blend_equation_advanced             , KHR_blend_equation_advanced            , GLL, GLC,  x , ES2, 2014)
 EXT(KHR_blend_equation_advanced_coherent    , KHR_blend_equation_advanced_coherent   , GLL, GLC,  x , ES2, 2014)
@@ -368,6 +371,7 @@ EXT(MESA_ycbcr_texture                      , MESA_ycbcr_texture                
 
 EXT(NVX_gpu_memory_info                     , NVX_gpu_memory_info                    , GLL, GLC,  x ,  x , 2013)
 
+EXT(NV_alpha_to_coverage_dither_control     , NV_alpha_to_coverage_dither_control    , GLL, GLC,  x , ES2, 2017)
 EXT(NV_blend_square                         , dummy_true                             , GLL,  x ,  x ,  x , 1999)
 EXT(NV_compute_shader_derivatives           , NV_compute_shader_derivatives          , GLL, GLC,  x ,  32, 2018)
 EXT(NV_conditional_render                   , NV_conditional_render                  , GLL, GLC,  x , ES2, 2008)
@@ -375,6 +379,7 @@ EXT(NV_conservative_raster                  , NV_conservative_raster            
 EXT(NV_conservative_raster_dilate           , NV_conservative_raster_dilate          , GLL, GLC, ES1, ES2, 2015)
 EXT(NV_conservative_raster_pre_snap         , NV_conservative_raster_pre_snap        , GLL, GLC, ES1, ES2, 2017)
 EXT(NV_conservative_raster_pre_snap_triangles, NV_conservative_raster_pre_snap_triangles, GLL, GLC, ES1, ES2, 2015)
+EXT(NV_copy_image                           , NV_copy_image                          , GLL, GLC,  x ,  x,  2009)
 EXT(NV_depth_clamp                          , ARB_depth_clamp                        , GLL, GLC,  x ,  x , 2001)
 EXT(NV_draw_buffers                         , dummy_true                             ,  x ,  x ,  x , ES2, 2011)
 EXT(NV_fbo_color_attachments                , dummy_true                             ,  x ,  x ,  x , ES2, 2010)
@@ -384,6 +389,7 @@ EXT(NV_fragment_shader_interlock            , ARB_fragment_shader_interlock     
 EXT(NV_image_formats                        , ARB_shader_image_load_store            ,  x ,  x ,  x ,  31, 2014)
 EXT(NV_light_max_exponent                   , dummy_true                             , GLL,  x ,  x ,  x , 1999)
 EXT(NV_packed_depth_stencil                 , dummy_true                             , GLL, GLC,  x ,  x , 2000)
+EXT(NV_pixel_buffer_object                  , EXT_pixel_buffer_object                ,  x ,  x ,  x , ES2, 2012)
 EXT(NV_point_sprite                         , NV_point_sprite                        , GLL, GLC,  x ,  x , 2001)
 EXT(NV_primitive_restart                    , NV_primitive_restart                   , GLL,  x ,  x ,  x , 2002)
 EXT(NV_read_buffer                          , dummy_true                             ,  x ,  x ,  x , ES2, 2011)
@@ -397,6 +403,8 @@ EXT(NV_texture_barrier                      , NV_texture_barrier                
 EXT(NV_texture_env_combine4                 , NV_texture_env_combine4                , GLL,  x ,  x ,  x , 1999)
 EXT(NV_texture_rectangle                    , NV_texture_rectangle                   , GLL,  x ,  x ,  x , 2000)
 EXT(NV_vdpau_interop                        , NV_vdpau_interop                       , GLL, GLC,  x ,  x , 2010)
+EXT(NV_viewport_array2                      , NV_viewport_array2                     , GLL, GLC,  x ,  31, 2015)
+EXT(NV_viewport_swizzle                     , NV_viewport_swizzle                    , GLL, GLC,  x ,  31, 2015)
 
 EXT(OES_EGL_image                           , OES_EGL_image                          , GLL, GLC, ES1, ES2, 2006) /* FIXME: Mesa expects GL_OES_EGL_image to be available in OpenGL contexts. */
 EXT(OES_EGL_image_external                  , OES_EGL_image_external                 ,  x ,  x , ES1, ES2, 2010)

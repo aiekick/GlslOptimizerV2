@@ -82,7 +82,13 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *_ctx,
    /* Set default language version and extensions */
    this->language_version = 110;
    this->forced_language_version = ctx->Const.ForceGLSLVersion;
-   this->zero_init = ctx->Const.GLSLZeroInit;
+   if (ctx->Const.GLSLZeroInit == 1) {
+      this->zero_init = (1u << ir_var_auto) | (1u << ir_var_temporary) | (1u << ir_var_shader_out);
+   } else if (ctx->Const.GLSLZeroInit == 2) {
+      this->zero_init = (1u << ir_var_auto) | (1u << ir_var_temporary) | (1u << ir_var_function_out);
+   } else {
+      this->zero_init = 0;
+   }
    this->gl_version = 20;
    this->compat_shader = true;
    this->es_shader = false;
@@ -721,6 +727,7 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(EXT_demote_to_helper_invocation),
    EXT(EXT_frag_depth),
    EXT(EXT_draw_buffers),
+   EXT(EXT_draw_instanced),
    EXT(EXT_clip_cull_distance),
    EXT(EXT_geometry_point_size),
    EXT_AEP(EXT_geometry_shader),
@@ -745,11 +752,13 @@ static const _mesa_glsl_extension _mesa_glsl_supported_extensions[] = {
    EXT(EXT_texture_shadow_lod),
    EXT(INTEL_conservative_rasterization),
    EXT(INTEL_shader_atomic_float_minmax),
+   EXT(INTEL_shader_integer_functions2),
    EXT(MESA_shader_integer_functions),
    EXT(NV_compute_shader_derivatives),
    EXT(NV_fragment_shader_interlock),
    EXT(NV_image_formats),
    EXT(NV_shader_atomic_float),
+   EXT(NV_viewport_array2),
 };
 
 #undef EXT
@@ -1163,13 +1172,6 @@ _mesa_ast_type_qualifier_print(const struct ast_type_qualifier *q)
       printf("flat ");
    if (q->flags.q.noperspective)
       printf("noperspective ");
-
-   if (q->precision == ast_precision_high)
-	   printf("highp ");
-   if (q->precision == ast_precision_medium)
-	   printf("mediump ");
-   if (q->precision == ast_precision_low)
-	   printf("lowp ");
 }
 
 
@@ -1201,14 +1203,13 @@ ast_opt_array_dimensions_print(const ast_array_specifier *array_specifier)
 void
 ast_compound_statement::print(void) const
 {
-	printf("{\n");
+   printf("{\n");
 
-	foreach_list_typed(ast_node, ast, link, &this->statements)
-	{
-		ast->print();
-	}
+   foreach_list_typed(ast_node, ast, link, &this->statements) {
+      ast->print();
+   }
 
-	printf("}\n");
+   printf("}\n");
 }
 
 
@@ -1341,14 +1342,14 @@ ast_expression::print(void) const
    }
 
    case ast_aggregate: {
-      printf("{\n");
+      printf("{ ");
       foreach_list_typed (ast_node, ast, link, & this->expressions) {
 	 if (&ast->link != this->expressions.get_head())
 	    printf(", ");
 
 	 ast->print();
       }
-      printf("}\n");
+      printf("} ");
       break;
    }
 
@@ -1379,7 +1380,7 @@ ast_expression_statement::print(void) const
    if (expression)
       expression->print();
 
-   printf(";\n");
+   printf("; ");
 }
 
 
@@ -1480,7 +1481,7 @@ ast_declarator_list::print(void) const
       ast->print();
    }
 
-   printf(";\n");
+   printf("; ");
 }
 
 
@@ -1496,20 +1497,20 @@ ast_jump_statement::print(void) const
 {
    switch (mode) {
    case ast_continue:
-      printf("continue;\n");
+      printf("continue; ");
       break;
    case ast_break:
-      printf("break;\n");
+      printf("break; ");
       break;
    case ast_return:
       printf("return ");
       if (opt_return_value)
 	 opt_return_value->print();
 
-      printf(";\n");
+      printf("; ");
       break;
    case ast_discard:
-      printf("discard;\n");
+      printf("discard; ");
       break;
    }
 }
@@ -1537,7 +1538,7 @@ ast_selection_statement::print(void) const
 {
    printf("if ( ");
    condition->print();
-   printf(")\n");
+   printf(") ");
 
    then_statement->print();
 
@@ -1563,7 +1564,7 @@ ast_switch_statement::print(void) const
 {
    printf("switch ( ");
    test_expression->print();
-   printf(")\n");
+   printf(") ");
 
    body->print();
 }
@@ -1580,7 +1581,7 @@ ast_switch_statement::ast_switch_statement(ast_expression *test_expression,
 void
 ast_switch_body::print(void) const
 {
-   printf("\n{\n");
+   printf("{\n");
    if (stmts != NULL) {
       stmts->print();
    }
@@ -1599,9 +1600,9 @@ void ast_case_label::print(void) const
    if (test_value != NULL) {
       printf("case ");
       test_value->print();
-      printf(":\n");
+      printf(": ");
    } else {
-      printf("default:\n");
+      printf("default: ");
    }
 }
 
@@ -1628,7 +1629,6 @@ ast_case_label_list::ast_case_label_list(void)
 
 void ast_case_statement::print(void) const
 {
-	printf("\t");
    labels->print();
    foreach_list_typed(ast_node, ast, link, & this->stmts) {
       ast->print();
@@ -1672,7 +1672,7 @@ ast_iteration_statement::print(void) const
 
       if (rest_expression)
 	 rest_expression->print();
-      printf(")\n");
+      printf(") ");
 
       body->print();
       break;
@@ -1681,7 +1681,7 @@ ast_iteration_statement::print(void) const
       printf("while ( ");
       if (condition)
 	 condition->print();
-      printf(")\n");
+      printf(") ");
       body->print();
       break;
 
@@ -1691,7 +1691,7 @@ ast_iteration_statement::print(void) const
       printf("while ( ");
       if (condition)
 	 condition->print();
-      printf(");\n");
+      printf("); ");
       break;
    }
 }
@@ -1714,11 +1714,11 @@ ast_iteration_statement::ast_iteration_statement(int mode,
 void
 ast_struct_specifier::print(void) const
 {
-   printf("struct %s \n{\n ", name);
+   printf("struct %s { ", name);
    foreach_list_typed(ast_node, ast, link, &this->declarations) {
       ast->print();
    }
-   printf("}\n ");
+   printf("} ");
 }
 
 
@@ -1937,6 +1937,8 @@ set_shader_inout_layout(struct gl_shader *shader,
    shader->bindless_image = state->bindless_image_specified;
    shader->bound_sampler = state->bound_sampler_specified;
    shader->bound_image = state->bound_image_specified;
+   shader->redeclares_gl_layer = state->redeclares_gl_layer;
+   shader->layer_viewport_relative = state->layer_viewport_relative;
 }
 
 /* src can be NULL if only the symbols found in the exec_list should be
@@ -2004,7 +2006,7 @@ assign_subroutine_indexes(struct _mesa_glsl_parse_state *state)
    }
 }
 
-void
+static void
 add_builtin_defines(struct _mesa_glsl_parse_state *state,
                     void (*add_builtin_define)(struct glcpp_parser *, const char *, int),
                     struct glcpp_parser *data,
@@ -2240,7 +2242,13 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader,
    shader->Version = state->language_version;
    shader->IsES = state->es_shader;
 
+   struct gl_shader_compiler_options *options =
+      &ctx->Const.ShaderCompilerOptions[shader->Stage];
+
    if (!state->error && !shader->ir->is_empty()) {
+      if (options->LowerPrecision)
+         lower_precision(shader->ir);
+      lower_builtins(shader->ir);
       assign_subroutine_indexes(state);
       lower_subroutine(shader->ir, state);
       opt_shader_and_create_symbol_table(ctx, state->symbols, shader);

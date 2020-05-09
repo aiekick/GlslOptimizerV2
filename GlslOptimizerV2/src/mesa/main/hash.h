@@ -1,6 +1,6 @@
 /**
  * \file hash.h
- * Generic hash table. 
+ * Generic hash table.
  */
 
 /*
@@ -32,9 +32,11 @@
 #define HASH_H
 
 
+#include <stdbool.h>
+#include <stdint.h>
 #include "glheader.h"
-#include "imports.h"
-//#include "c11/threads.h"
+
+#include "c11/threads.h"
 
 /**
  * Magic GLuint object name that gets stored outside of the struct hash_table.
@@ -99,7 +101,7 @@ uint_key(GLuint id)
 struct _mesa_HashTable {
    struct hash_table *ht;
    GLuint MaxKey;                        /**< highest key inserted so far */
-   //mtx_t Mutex;                          /**< mutual exclusion lock */
+   mtx_t Mutex;                          /**< mutual exclusion lock */
    GLboolean InDeleteAll;                /**< Debug check */
    /** Value that would be in the table for DELETED_KEY_VALUE. */
    void *deleted_key_data;
@@ -128,7 +130,7 @@ static inline void
 _mesa_HashLockMutex(struct _mesa_HashTable *table)
 {
    assert(table);
-  //mtx_lock(&table->Mutex);
+   mtx_lock(&table->Mutex);
 }
 
 
@@ -141,7 +143,7 @@ static inline void
 _mesa_HashUnlockMutex(struct _mesa_HashTable *table)
 {
    assert(table);
-   //mtx_unlock(&table->Mutex);
+   mtx_unlock(&table->Mutex);
 }
 
 extern void *_mesa_HashLookupLocked(struct _mesa_HashTable *table, GLuint key);

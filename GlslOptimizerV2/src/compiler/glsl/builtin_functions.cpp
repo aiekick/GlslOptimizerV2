@@ -827,6 +827,18 @@ demote_to_helper_invocation(const _mesa_glsl_parse_state *state)
 }
 
 static bool
+shader_integer_functions2(const _mesa_glsl_parse_state *state)
+{
+   return state->INTEL_shader_integer_functions2_enable;
+}
+
+static bool
+shader_integer_functions2_int64(const _mesa_glsl_parse_state *state)
+{
+   return state->INTEL_shader_integer_functions2_enable && state->has_int64();
+}
+
+static bool
 is_nir(const _mesa_glsl_parse_state *state)
 {
    return state->ctx->Const.ShaderCompilerOptions[state->stage].NirOptions;
@@ -1115,13 +1127,21 @@ private:
    B1(bitCount)
    B1(findLSB)
    B1(findMSB)
+   BA1(countLeadingZeros)
+   BA1(countTrailingZeros)
    BA1(fma)
    B2(ldexp)
    B2(frexp)
    B2(dfrexp)
    B1(uaddCarry)
    B1(usubBorrow)
+   BA1(addSaturate)
+   BA1(subtractSaturate)
+   BA1(absoluteDifference)
+   BA1(average)
+   BA1(averageRounded)
    B1(mulExtended)
+   BA1(multiply32x16)
    B1(interpolateAtCentroid)
    B1(interpolateAtOffset)
    B1(interpolateAtSample)
@@ -4292,6 +4312,227 @@ builtin_builder::create_builtins()
                 generate_ir::umul64(mem_ctx, integer_functions_supported),
                 NULL);
 
+   add_function("countLeadingZeros",
+                _countLeadingZeros(shader_integer_functions2,
+                                   glsl_type::uint_type),
+                _countLeadingZeros(shader_integer_functions2,
+                                   glsl_type::uvec2_type),
+                _countLeadingZeros(shader_integer_functions2,
+                                   glsl_type::uvec3_type),
+                _countLeadingZeros(shader_integer_functions2,
+                                   glsl_type::uvec4_type),
+                NULL);
+
+   add_function("countTrailingZeros",
+                _countTrailingZeros(shader_integer_functions2,
+                                    glsl_type::uint_type),
+                _countTrailingZeros(shader_integer_functions2,
+                                    glsl_type::uvec2_type),
+                _countTrailingZeros(shader_integer_functions2,
+                                    glsl_type::uvec3_type),
+                _countTrailingZeros(shader_integer_functions2,
+                                    glsl_type::uvec4_type),
+                NULL);
+
+   add_function("absoluteDifference",
+                _absoluteDifference(shader_integer_functions2,
+                                    glsl_type::int_type),
+                _absoluteDifference(shader_integer_functions2,
+                                    glsl_type::ivec2_type),
+                _absoluteDifference(shader_integer_functions2,
+                                    glsl_type::ivec3_type),
+                _absoluteDifference(shader_integer_functions2,
+                                    glsl_type::ivec4_type),
+                _absoluteDifference(shader_integer_functions2,
+                                    glsl_type::uint_type),
+                _absoluteDifference(shader_integer_functions2,
+                                    glsl_type::uvec2_type),
+                _absoluteDifference(shader_integer_functions2,
+                                    glsl_type::uvec3_type),
+                _absoluteDifference(shader_integer_functions2,
+                                    glsl_type::uvec4_type),
+
+                _absoluteDifference(shader_integer_functions2_int64,
+                                    glsl_type::int64_t_type),
+                _absoluteDifference(shader_integer_functions2_int64,
+                                    glsl_type::i64vec2_type),
+                _absoluteDifference(shader_integer_functions2_int64,
+                                    glsl_type::i64vec3_type),
+                _absoluteDifference(shader_integer_functions2_int64,
+                                    glsl_type::i64vec4_type),
+                _absoluteDifference(shader_integer_functions2_int64,
+                                    glsl_type::uint64_t_type),
+                _absoluteDifference(shader_integer_functions2_int64,
+                                    glsl_type::u64vec2_type),
+                _absoluteDifference(shader_integer_functions2_int64,
+                                    glsl_type::u64vec3_type),
+                _absoluteDifference(shader_integer_functions2_int64,
+                                    glsl_type::u64vec4_type),
+                NULL);
+
+   add_function("addSaturate",
+                _addSaturate(shader_integer_functions2,
+                             glsl_type::int_type),
+                _addSaturate(shader_integer_functions2,
+                             glsl_type::ivec2_type),
+                _addSaturate(shader_integer_functions2,
+                             glsl_type::ivec3_type),
+                _addSaturate(shader_integer_functions2,
+                             glsl_type::ivec4_type),
+                _addSaturate(shader_integer_functions2,
+                             glsl_type::uint_type),
+                _addSaturate(shader_integer_functions2,
+                             glsl_type::uvec2_type),
+                _addSaturate(shader_integer_functions2,
+                             glsl_type::uvec3_type),
+                _addSaturate(shader_integer_functions2,
+                             glsl_type::uvec4_type),
+
+                _addSaturate(shader_integer_functions2_int64,
+                             glsl_type::int64_t_type),
+                _addSaturate(shader_integer_functions2_int64,
+                             glsl_type::i64vec2_type),
+                _addSaturate(shader_integer_functions2_int64,
+                             glsl_type::i64vec3_type),
+                _addSaturate(shader_integer_functions2_int64,
+                             glsl_type::i64vec4_type),
+                _addSaturate(shader_integer_functions2_int64,
+                             glsl_type::uint64_t_type),
+                _addSaturate(shader_integer_functions2_int64,
+                             glsl_type::u64vec2_type),
+                _addSaturate(shader_integer_functions2_int64,
+                             glsl_type::u64vec3_type),
+                _addSaturate(shader_integer_functions2_int64,
+                             glsl_type::u64vec4_type),
+                NULL);
+
+   add_function("average",
+                _average(shader_integer_functions2,
+                         glsl_type::int_type),
+                _average(shader_integer_functions2,
+                         glsl_type::ivec2_type),
+                _average(shader_integer_functions2,
+                         glsl_type::ivec3_type),
+                _average(shader_integer_functions2,
+                         glsl_type::ivec4_type),
+                _average(shader_integer_functions2,
+                         glsl_type::uint_type),
+                _average(shader_integer_functions2,
+                         glsl_type::uvec2_type),
+                _average(shader_integer_functions2,
+                         glsl_type::uvec3_type),
+                _average(shader_integer_functions2,
+                         glsl_type::uvec4_type),
+
+                _average(shader_integer_functions2_int64,
+                         glsl_type::int64_t_type),
+                _average(shader_integer_functions2_int64,
+                         glsl_type::i64vec2_type),
+                _average(shader_integer_functions2_int64,
+                         glsl_type::i64vec3_type),
+                _average(shader_integer_functions2_int64,
+                         glsl_type::i64vec4_type),
+                _average(shader_integer_functions2_int64,
+                         glsl_type::uint64_t_type),
+                _average(shader_integer_functions2_int64,
+                         glsl_type::u64vec2_type),
+                _average(shader_integer_functions2_int64,
+                         glsl_type::u64vec3_type),
+                _average(shader_integer_functions2_int64,
+                         glsl_type::u64vec4_type),
+                NULL);
+
+   add_function("averageRounded",
+                _averageRounded(shader_integer_functions2,
+                                glsl_type::int_type),
+                _averageRounded(shader_integer_functions2,
+                                glsl_type::ivec2_type),
+                _averageRounded(shader_integer_functions2,
+                                glsl_type::ivec3_type),
+                _averageRounded(shader_integer_functions2,
+                                glsl_type::ivec4_type),
+                _averageRounded(shader_integer_functions2,
+                                glsl_type::uint_type),
+                _averageRounded(shader_integer_functions2,
+                                glsl_type::uvec2_type),
+                _averageRounded(shader_integer_functions2,
+                                glsl_type::uvec3_type),
+                _averageRounded(shader_integer_functions2,
+                                glsl_type::uvec4_type),
+
+                _averageRounded(shader_integer_functions2_int64,
+                                glsl_type::int64_t_type),
+                _averageRounded(shader_integer_functions2_int64,
+                                glsl_type::i64vec2_type),
+                _averageRounded(shader_integer_functions2_int64,
+                                glsl_type::i64vec3_type),
+                _averageRounded(shader_integer_functions2_int64,
+                                glsl_type::i64vec4_type),
+                _averageRounded(shader_integer_functions2_int64,
+                                glsl_type::uint64_t_type),
+                _averageRounded(shader_integer_functions2_int64,
+                                glsl_type::u64vec2_type),
+                _averageRounded(shader_integer_functions2_int64,
+                                glsl_type::u64vec3_type),
+                _averageRounded(shader_integer_functions2_int64,
+                                glsl_type::u64vec4_type),
+                NULL);
+
+   add_function("subtractSaturate",
+                _subtractSaturate(shader_integer_functions2,
+                                  glsl_type::int_type),
+                _subtractSaturate(shader_integer_functions2,
+                                  glsl_type::ivec2_type),
+                _subtractSaturate(shader_integer_functions2,
+                                  glsl_type::ivec3_type),
+                _subtractSaturate(shader_integer_functions2,
+                                  glsl_type::ivec4_type),
+                _subtractSaturate(shader_integer_functions2,
+                                  glsl_type::uint_type),
+                _subtractSaturate(shader_integer_functions2,
+                                  glsl_type::uvec2_type),
+                _subtractSaturate(shader_integer_functions2,
+                                  glsl_type::uvec3_type),
+                _subtractSaturate(shader_integer_functions2,
+                                  glsl_type::uvec4_type),
+
+                _subtractSaturate(shader_integer_functions2_int64,
+                                  glsl_type::int64_t_type),
+                _subtractSaturate(shader_integer_functions2_int64,
+                                  glsl_type::i64vec2_type),
+                _subtractSaturate(shader_integer_functions2_int64,
+                                  glsl_type::i64vec3_type),
+                _subtractSaturate(shader_integer_functions2_int64,
+                                  glsl_type::i64vec4_type),
+                _subtractSaturate(shader_integer_functions2_int64,
+                                  glsl_type::uint64_t_type),
+                _subtractSaturate(shader_integer_functions2_int64,
+                                  glsl_type::u64vec2_type),
+                _subtractSaturate(shader_integer_functions2_int64,
+                                  glsl_type::u64vec3_type),
+                _subtractSaturate(shader_integer_functions2_int64,
+                                  glsl_type::u64vec4_type),
+                NULL);
+
+   add_function("multiply32x16",
+                _multiply32x16(shader_integer_functions2,
+                               glsl_type::int_type),
+                _multiply32x16(shader_integer_functions2,
+                               glsl_type::ivec2_type),
+                _multiply32x16(shader_integer_functions2,
+                               glsl_type::ivec3_type),
+                _multiply32x16(shader_integer_functions2,
+                               glsl_type::ivec4_type),
+                _multiply32x16(shader_integer_functions2,
+                               glsl_type::uint_type),
+                _multiply32x16(shader_integer_functions2,
+                               glsl_type::uvec2_type),
+                _multiply32x16(shader_integer_functions2,
+                               glsl_type::uvec3_type),
+                _multiply32x16(shader_integer_functions2,
+                               glsl_type::uvec4_type),
+                NULL);
+
 #undef F
 #undef FI
 #undef FIUD_VEC
@@ -4928,19 +5169,17 @@ builtin_builder::_tanh(const glsl_type *type)
    ir_variable *x = in_var(type, "x");
    MAKE_SIG(type, v130, 1, x);
 
-   /* tanh(x) := (0.5 * (e^x - e^(-x))) / (0.5 * (e^x + e^(-x)))
-    *
-    * With a little algebra this reduces to (e^2x - 1) / (e^2x + 1)
-    *
-    * Clamp x to (-inf, +10] to avoid precision problems.  When x > 10, e^2x
-    * is so much larger than 1.0 that 1.0 gets flushed to zero in the
-    * computation e^2x +/- 1 so it can be ignored.
+   /* Clamp x to [-10, +10] to avoid precision problems.
+    * When x > 10, e^(-x) is so small relative to e^x that it gets flushed to
+    * zero in the computation e^x + e^(-x). The same happens in the other
+    * direction when x < -10.
     */
    ir_variable *t = body.make_temp(type, "tmp");
-   body.emit(assign(t, min2(x, imm(10.0f))));
+   body.emit(assign(t, min2(max2(x, imm(-10.0f)), imm(10.0f))));
 
-   body.emit(ret(div(sub(exp(mul(t, imm(2.0f))), imm(1.0f)),
-                     add(exp(mul(t, imm(2.0f))), imm(1.0f)))));
+   /* (e^x - e^(-x)) / (e^x + e^(-x)) */
+   body.emit(ret(div(sub(exp(t), exp(neg(t))),
+                     add(exp(t), exp(neg(t))))));
 
    return sig;
 }
@@ -6434,103 +6673,52 @@ builtin_builder::_fwidthFine(const glsl_type *type)
 ir_function_signature *
 builtin_builder::_noise1(const glsl_type *type)
 {
-   return unop(v110, ir_unop_noise, glsl_type::float_type, type);
+   /* From the GLSL 4.60 specification:
+    *
+    *    "The noise functions noise1, noise2, noise3, and noise4 have been
+    *    deprecated starting with version 4.4 of GLSL. When not generating
+    *    SPIR-V they are defined to return the value 0.0 or a vector whose
+    *    components are all 0.0. When generating SPIR-V the noise functions
+    *    are not declared and may not be used."
+    *
+    * In earlier versions of the GLSL specification attempt to define some
+    * sort of statistical noise function.  However, the function's
+    * characteristics have always been such that always returning 0 is
+    * valid and Mesa has always returned 0 for noise on most drivers.
+    */
+   ir_variable *p = in_var(type, "p");
+   MAKE_SIG(glsl_type::float_type, v110, 1, p);
+   body.emit(ret(imm(glsl_type::float_type, ir_constant_data())));
+   return sig;
 }
 
 ir_function_signature *
 builtin_builder::_noise2(const glsl_type *type)
 {
+   /* See builtin_builder::_noise1 */
    ir_variable *p = in_var(type, "p");
    MAKE_SIG(glsl_type::vec2_type, v110, 1, p);
-
-   ir_constant_data b_offset;
-   b_offset.f[0] = 601.0f;
-   b_offset.f[1] = 313.0f;
-   b_offset.f[2] = 29.0f;
-   b_offset.f[3] = 277.0f;
-
-   ir_variable *a = body.make_temp(glsl_type::float_type, "a");
-   ir_variable *b = body.make_temp(glsl_type::float_type, "b");
-   ir_variable *t = body.make_temp(glsl_type::vec2_type,  "t");
-   body.emit(assign(a, expr(ir_unop_noise, p)));
-   body.emit(assign(b, expr(ir_unop_noise, add(p, imm(type, b_offset)))));
-   body.emit(assign(t, a, WRITEMASK_X));
-   body.emit(assign(t, b, WRITEMASK_Y));
-   body.emit(ret(t));
-
+   body.emit(ret(imm(glsl_type::vec2_type, ir_constant_data())));
    return sig;
 }
 
 ir_function_signature *
 builtin_builder::_noise3(const glsl_type *type)
 {
+   /* See builtin_builder::_noise1 */
    ir_variable *p = in_var(type, "p");
    MAKE_SIG(glsl_type::vec3_type, v110, 1, p);
-
-   ir_constant_data b_offset;
-   b_offset.f[0] = 601.0f;
-   b_offset.f[1] = 313.0f;
-   b_offset.f[2] = 29.0f;
-   b_offset.f[3] = 277.0f;
-
-   ir_constant_data c_offset;
-   c_offset.f[0] = 1559.0f;
-   c_offset.f[1] = 113.0f;
-   c_offset.f[2] = 1861.0f;
-   c_offset.f[3] = 797.0f;
-
-   ir_variable *a = body.make_temp(glsl_type::float_type, "a");
-   ir_variable *b = body.make_temp(glsl_type::float_type, "b");
-   ir_variable *c = body.make_temp(glsl_type::float_type, "c");
-   ir_variable *t = body.make_temp(glsl_type::vec3_type,  "t");
-   body.emit(assign(a, expr(ir_unop_noise, p)));
-   body.emit(assign(b, expr(ir_unop_noise, add(p, imm(type, b_offset)))));
-   body.emit(assign(c, expr(ir_unop_noise, add(p, imm(type, c_offset)))));
-   body.emit(assign(t, a, WRITEMASK_X));
-   body.emit(assign(t, b, WRITEMASK_Y));
-   body.emit(assign(t, c, WRITEMASK_Z));
-   body.emit(ret(t));
-
+   body.emit(ret(imm(glsl_type::vec3_type, ir_constant_data())));
    return sig;
 }
 
 ir_function_signature *
 builtin_builder::_noise4(const glsl_type *type)
 {
+   /* See builtin_builder::_noise1 */
    ir_variable *p = in_var(type, "p");
    MAKE_SIG(glsl_type::vec4_type, v110, 1, p);
-
-   ir_variable *_p = body.make_temp(type, "_p");
-
-   ir_constant_data p_offset;
-   p_offset.f[0] = 1559.0f;
-   p_offset.f[1] = 113.0f;
-   p_offset.f[2] = 1861.0f;
-   p_offset.f[3] = 797.0f;
-
-   body.emit(assign(_p, add(p, imm(type, p_offset))));
-
-   ir_constant_data offset;
-   offset.f[0] = 601.0f;
-   offset.f[1] = 313.0f;
-   offset.f[2] = 29.0f;
-   offset.f[3] = 277.0f;
-
-   ir_variable *a = body.make_temp(glsl_type::float_type, "a");
-   ir_variable *b = body.make_temp(glsl_type::float_type, "b");
-   ir_variable *c = body.make_temp(glsl_type::float_type, "c");
-   ir_variable *d = body.make_temp(glsl_type::float_type, "d");
-   ir_variable *t = body.make_temp(glsl_type::vec4_type,  "t");
-   body.emit(assign(a, expr(ir_unop_noise, p)));
-   body.emit(assign(b, expr(ir_unop_noise, add(p, imm(type, offset)))));
-   body.emit(assign(c, expr(ir_unop_noise, _p)));
-   body.emit(assign(d, expr(ir_unop_noise, add(_p, imm(type, offset)))));
-   body.emit(assign(t, a, WRITEMASK_X));
-   body.emit(assign(t, b, WRITEMASK_Y));
-   body.emit(assign(t, c, WRITEMASK_Z));
-   body.emit(assign(t, d, WRITEMASK_W));
-   body.emit(ret(t));
-
+   body.emit(ret(imm(glsl_type::vec4_type, ir_constant_data())));
    return sig;
 }
 
@@ -6596,6 +6784,28 @@ builtin_builder::_findMSB(const glsl_type *type)
 {
    return unop(gpu_shader5_or_es31_or_integer_functions, ir_unop_find_msb,
                glsl_type::ivec(type->vector_elements), type);
+}
+
+ir_function_signature *
+builtin_builder::_countLeadingZeros(builtin_available_predicate avail,
+                                    const glsl_type *type)
+{
+   return unop(avail, ir_unop_clz,
+               glsl_type::uvec(type->vector_elements), type);
+}
+
+ir_function_signature *
+builtin_builder::_countTrailingZeros(builtin_available_predicate avail,
+                                     const glsl_type *type)
+{
+   ir_variable *a = in_var(type, "a");
+   MAKE_SIG(glsl_type::uvec(type->vector_elements), avail, 1, a);
+
+   body.emit(ret(ir_builder::min2(
+                    ir_builder::i2u(ir_builder::expr(ir_unop_find_lsb, a)),
+                    imm(32u))));
+
+   return sig;
 }
 
 ir_function_signature *
@@ -6694,6 +6904,13 @@ builtin_builder::_uaddCarry(const glsl_type *type)
 }
 
 ir_function_signature *
+builtin_builder::_addSaturate(builtin_available_predicate avail,
+                              const glsl_type *type)
+{
+   return binop(avail, ir_binop_add_sat, type, type, type);
+}
+
+ir_function_signature *
 builtin_builder::_usubBorrow(const glsl_type *type)
 {
    ir_variable *x = in_var(type, "x");
@@ -6705,6 +6922,40 @@ builtin_builder::_usubBorrow(const glsl_type *type)
    body.emit(ret(sub(x, y)));
 
    return sig;
+}
+
+ir_function_signature *
+builtin_builder::_subtractSaturate(builtin_available_predicate avail,
+                                   const glsl_type *type)
+{
+   return binop(avail, ir_binop_sub_sat, type, type, type);
+}
+
+ir_function_signature *
+builtin_builder::_absoluteDifference(builtin_available_predicate avail,
+                                     const glsl_type *type)
+{
+   /* absoluteDifference returns an unsigned type that has the same number of
+    * bits and number of vector elements as the type of the operands.
+    */
+   return binop(avail, ir_binop_abs_sub,
+                glsl_type::get_instance(glsl_unsigned_base_type_of(type->base_type),
+                                        type->vector_elements, 1),
+                type, type);
+}
+
+ir_function_signature *
+builtin_builder::_average(builtin_available_predicate avail,
+                          const glsl_type *type)
+{
+   return binop(avail, ir_binop_avg, type, type, type);
+}
+
+ir_function_signature *
+builtin_builder::_averageRounded(builtin_available_predicate avail,
+                                 const glsl_type *type)
+{
+   return binop(avail, ir_binop_avg_round, type, type, type);
 }
 
 /**
@@ -6751,6 +7002,13 @@ builtin_builder::_mulExtended(const glsl_type *type)
    }
 
    return sig;
+}
+
+ir_function_signature *
+builtin_builder::_multiply32x16(builtin_available_predicate avail,
+                                const glsl_type *type)
+{
+   return binop(avail, ir_binop_mul_32x16, type, type, type);
 }
 
 ir_function_signature *
@@ -7347,7 +7605,7 @@ builtin_builder::_helper_invocation()
 
 /* The singleton instance of builtin_builder. */
 static builtin_builder builtins;
-//static mtx_t builtins_lock = _MTX_INITIALIZER_NP;
+static mtx_t builtins_lock = _MTX_INITIALIZER_NP;
 static uint32_t builtin_users = 0;
 
 /**
@@ -7357,20 +7615,20 @@ static uint32_t builtin_users = 0;
 extern "C" void
 _mesa_glsl_builtin_functions_init_or_ref()
 {
-  //mtx_lock(&builtins_lock);
+   mtx_lock(&builtins_lock);
    if (builtin_users++ == 0)
       builtins.initialize();
-   //mtx_unlock(&builtins_lock);
+   mtx_unlock(&builtins_lock);
 }
 
 extern "C" void
 _mesa_glsl_builtin_functions_decref()
 {
-  //mtx_lock(&builtins_lock);
+   mtx_lock(&builtins_lock);
    assert(builtin_users != 0);
    if (--builtin_users == 0)
       builtins.release();
-   //mtx_unlock(&builtins_lock);
+   mtx_unlock(&builtins_lock);
 }
 
 ir_function_signature *
@@ -7378,9 +7636,9 @@ _mesa_glsl_find_builtin_function(_mesa_glsl_parse_state *state,
                                  const char *name, exec_list *actual_parameters)
 {
    ir_function_signature *s;
-  //mtx_lock(&builtins_lock);
+   mtx_lock(&builtins_lock);
    s = builtins.find(state, name, actual_parameters);
-   //mtx_unlock(&builtins_lock);
+   mtx_unlock(&builtins_lock);
 
    return s;
 }
@@ -7390,7 +7648,7 @@ _mesa_glsl_has_builtin_function(_mesa_glsl_parse_state *state, const char *name)
 {
    ir_function *f;
    bool ret = false;
-  //mtx_lock(&builtins_lock);
+   mtx_lock(&builtins_lock);
    f = builtins.shader->symbols->get_function(name);
    if (f != NULL) {
       foreach_in_list(ir_function_signature, sig, &f->signatures) {
@@ -7400,7 +7658,7 @@ _mesa_glsl_has_builtin_function(_mesa_glsl_parse_state *state, const char *name)
          }
       }
    }
-   //mtx_unlock(&builtins_lock);
+   mtx_unlock(&builtins_lock);
 
    return ret;
 }

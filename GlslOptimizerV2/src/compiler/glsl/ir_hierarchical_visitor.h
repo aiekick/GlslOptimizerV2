@@ -25,7 +25,6 @@
 #ifndef IR_HIERARCHICAL_VISITOR_H
 #define IR_HIERARCHICAL_VISITOR_H
 
-
 /**
  * Enumeration values returned by visit methods to guide processing
  */
@@ -34,6 +33,7 @@ enum ir_visitor_status {
    visit_continue_with_parent,	/**< Don't visit siblings, continue w/parent. */
    visit_stop			/**< Stop visiting immediately. */
 };
+
 
 #ifdef __cplusplus
 /**
@@ -74,7 +74,6 @@ enum ir_visitor_status {
  *    http://c2.com/cgi/wiki?HierarchicalVisitorDiscussion
  */
 
-class ir_instruction;
 class ir_hierarchical_visitor {
 public:
    ir_hierarchical_visitor();
@@ -149,6 +148,12 @@ public:
     * Utility function to process a linked list of instructions with a visitor
     */
    void run(struct exec_list *instructions);
+
+   /**
+    * Utility function to call both the leave and enter callback functions.
+    * This is used for leaf nodes.
+    */
+   void call_enter_leave_callbacks(class ir_instruction *ir);
 
    /* Some visitors may need to insert new variable declarations and
     * assignments for portions of a subtree, which means they need a

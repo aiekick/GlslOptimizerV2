@@ -35,12 +35,14 @@
 #define TIME_UTC 1
 #endif
 
-#include "c99_compat.h" // for `inline`
+#include "c99_compat.h" /* for `inline` */
 
+/*---------------------------- types ----------------------------*/
 typedef void (*tss_dtor_t)(void*);
 typedef int (*thrd_start_t)(void*);
 
 
+/*-------------------- enumeration constants --------------------*/
 enum {
     mtx_plain     = 0,
     mtx_try       = 1,
@@ -56,6 +58,8 @@ enum {
     thrd_nomem        // out of memory
 };
 
+/*-------------------------- functions --------------------------*/
+
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include "threads_win32.h"
 #elif defined(HAVE_PTHREAD)
@@ -63,5 +67,7 @@ enum {
 #else
 #error Not supported on this platform.
 #endif
+
+
 
 #endif /* EMULATED_THREADS_H_INCLUDED_ */
