@@ -76,9 +76,9 @@ Customize the style ( the default theme is light but you can also customize app 
  
 ## Contributions / issues :
 
-As said im not an expert, so i you want help me, your are welcome.
+As said im not an expert, so if you want help me, your are welcome.
 
-Contributiosn : you can send a pull reaquest or speak about in isseu tab
+Contributiond : you can send a pull request or speak about in issue tab
 
 Issues : use issue tab
 
