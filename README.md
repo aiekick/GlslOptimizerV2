@@ -5,6 +5,8 @@ Vertex \ Tesselation Control \ Tesselation Evaluation \ Geometry \ Fragment
 
 Based on [Mesa3D](https://github.com/mesa3d/mesa) and [glsl-optimizer](https://github.com/aras-p/glsl-optimizer)
 
+Pay Attention, for the moment this app is full of bugs and can crash in any reason.
+
 ## Why ?
 
 Some time ago i found the original glsl-optimizer, but this project is stopped since a while and without support of Tesselation and Geometry shader stage nor last Opengl Api.
